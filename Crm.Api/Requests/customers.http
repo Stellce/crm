@@ -1,0 +1,19 @@
+@CRM_HostAddress = https://localhost:7273
+
+### Get users
+GET {{CRM_HostAddress}}/api/customers
+Accept: application/json
+
+### Create user
+POST {{CRM_HostAddress}}/api/customers
+Content-Type: application/json
+
+{
+    "name": "Alex",
+    "email": "alex@test.com"
+}
+
+### Get user by id
+GET {{CRM_HostAddress}}/api/customers/1
+
+###
