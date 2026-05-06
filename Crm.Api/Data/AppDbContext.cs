@@ -6,6 +6,7 @@ namespace Crm.Api.Data;
 public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(options)
 {
     public DbSet<Customer> Customers { get; set; }
+    public DbSet<Order> Orders { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -14,5 +15,14 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
         modelBuilder.Entity<Customer>()
             .HasIndex(customer => customer.Email)
             .IsUnique();
+
+        modelBuilder.Entity<Order>()
+            .HasOne(o => o.Customer)
+            .WithMany(c => c.Orders)
+            .HasForeignKey(o => o.CustomerId);
+        
+        modelBuilder.Entity<Order>()
+            .Property(o => o.TotalAmount)
+            .HasPrecision(18,2);
     }
 }

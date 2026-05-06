@@ -1,0 +1,5 @@
+@CRM_HostAddress = https://localhost:7273
+
+### Get Order
+GET {{CRM_HostAddress}}/api/orders/1
+Accept: application/json
