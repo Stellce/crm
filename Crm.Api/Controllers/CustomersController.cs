@@ -1,60 +1,67 @@
 using Crm.Api.Dtos;
 using Crm.Api.Services;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
 
-namespace Crm.Api.Controllers
+namespace Crm.Api.Controllers;
+
+[Authorize(Roles = "Admin, Manager")]
+[Route("api/[controller]")]
+[ApiController]
+public class CustomersController(
+    CustomerService customerService
+) : ControllerBase
 {
-    [Route("api/[controller]")]
-    [ApiController]
-    public class CustomersController(
-        CustomerService customerService
-    ) : ControllerBase
+    [HttpGet]
+    public async Task<ActionResult<List<CustomerResponse>>> GetAllCustomers()
     {
-        [HttpGet]
-        public async Task<ActionResult<List<CustomerResponse>>> GetAllCustomers()
-        {
-            return Ok(await customerService.GetAllCustomersAsync());
-        }
+        return Ok(await customerService.GetAllCustomersAsync());
+    }
 
-        [HttpGet("{id:int}")]
-        public async Task<ActionResult<CustomerResponse>> GetCustomerById(int id)
-        {
-            var customerResponse = await customerService.GetCustomerByIdAsync(id);
-            return Ok(customerResponse);
-        }
+    [HttpGet("{id:int}")]
+    public async Task<ActionResult<CustomerResponse>> GetCustomerById(int id)
+    {
+        var customerResponse = await customerService.GetCustomerByIdAsync(id);
+        return Ok(customerResponse);
+    }
 
-        [HttpPost]
-        public async Task<ActionResult<CustomerResponse>> CreateCustomer(CreateCustomerRequest request)
-        {
-            var createdCustomer = await customerService.CreateCustomer(request);
+    [HttpGet("{id:int}/orders")]
+    public async Task<ActionResult<List<OrderResponse>>> GetCustomerOrders(int id)
+    {
+        return Ok(await customerService.GetCustomerOrders(id));
+    }
 
-            return CreatedAtAction(
-                nameof(GetCustomerById),
-                new { id = createdCustomer.Id },
-                createdCustomer
-            );
-        }
+    [HttpPost]
+    public async Task<ActionResult<CustomerResponse>> CreateCustomer(CreateCustomerRequest request)
+    {
+        var createdCustomer = await customerService.CreateCustomer(request);
 
-        [HttpPut("{id:int}")]
-        public async Task<ActionResult> PutCustomer(CreateCustomerRequest request, int id)
-        {
-            await customerService.PutCustomer(request, id);
-            return NoContent();
-        }
+        return CreatedAtAction(
+            nameof(GetCustomerById),
+            new { id = createdCustomer.Id },
+            createdCustomer
+        );
+    }
 
-        [HttpPatch("{id:int}")]
-        public async Task<ActionResult> PatchCustomer(PatchCustomerRequest request, int id)
-        {
-            await customerService.PatchCustomer(request, id);
-            return NoContent();
-        }
+    [HttpPut("{id:int}")]
+    public async Task<ActionResult> PutCustomer(CreateCustomerRequest request, int id)
+    {
+        await customerService.PutCustomer(request, id);
+        return NoContent();
+    }
 
-        [HttpDelete("{id:int}")]
-        public async Task<ActionResult> DeleteCustomer(int id)
-        {
-            await customerService.DeleteCustomer(id);
-            return NoContent();
-        }
+    [HttpPatch("{id:int}")]
+    public async Task<ActionResult> PatchCustomer(PatchCustomerRequest request, int id)
+    {
+        await customerService.PatchCustomer(request, id);
+        return NoContent();
+    }
+
+    [HttpDelete("{id:int}")]
+    public async Task<ActionResult> DeleteCustomer(int id)
+    {
+        await customerService.DeleteCustomer(id);
+        return NoContent();
     }
 }

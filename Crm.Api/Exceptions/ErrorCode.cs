@@ -4,8 +4,12 @@ public enum ErrorCode
 {
     CustomerNotFound,
     CustomerAlreadyExists,
-    
+
     OrderNotFound,
+
+    UserNotFound,
+
+    InvalidCredentials,
 
     InternalServerError
 }

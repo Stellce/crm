@@ -26,7 +26,7 @@ public sealed class GlobalExceptionHandler(
                 Type = $"https://httpstatuses.com/{error.StatusCode}"
             };
         }
-        else 
+        else
         {
             logger.LogError(exception, "Unhandled exception");
 

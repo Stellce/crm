@@ -1,9 +1,11 @@
 using Crm.Api.Dtos;
 using Crm.Api.Services;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Crm.Api.Controllers;
 
+[Authorize(Roles = "Admin, Manager")]
 [Route("api/[controller]")]
 [ApiController]
 public class OrdersController(OrderService orderService) : ControllerBase
@@ -20,7 +22,7 @@ public class OrdersController(OrderService orderService) : ControllerBase
         var createdOrder = await orderService.CreateOrder(request);
         return CreatedAtAction(
             nameof(GetOrderById),
-            new { id = createdOrder.Id},
+            new { id = createdOrder.Id },
             createdOrder
         );
     }

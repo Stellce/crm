@@ -24,6 +24,18 @@ public static class ErrorCodeExtensions
                 "Order not found"
             ),
 
+            ErrorCode.InvalidCredentials => new ErrorInfo(
+                StatusCodes.Status401Unauthorized,
+                "UNAUTHORIZED",
+                "User not authorized"
+            ),
+
+            ErrorCode.UserNotFound => new ErrorInfo(
+                StatusCodes.Status404NotFound,
+                "USER_NOT_FOUND",
+                "User not found"
+            ),
+
             _ => new ErrorInfo(
                 StatusCodes.Status500InternalServerError,
                 "INTERNAL_SERVER_ERROR",
@@ -31,4 +43,4 @@ public static class ErrorCodeExtensions
             )
         };
     }
-} 
+}

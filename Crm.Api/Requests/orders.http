@@ -1,5 +1,17 @@
 @CRM_HostAddress = https://localhost:7273
+@AccessToken = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxIiwiZW1haWwiOiJtYW5hZ2VyQHRlc3QuY29tIiwicm9sZSI6Ik1hbmFnZXIiLCJleHAiOjE3NzgyMzUyMzYsImlzcyI6ImNybS1hcGkiLCJhdWQiOiJjcm0tY2xpZW50In0.7Ry5aN-eDCkWQsq0I7NK6EobqH5cMak0I4zem5MnN_g
 
 ### Get Order
 GET {{CRM_HostAddress}}/api/orders/1
 Accept: application/json
+Authorization: Bearer {{AccessToken}}
+
+### Create Order
+POST {{CRM_HostAddress}}/api/orders
+Content-Type: application/json
+Authorization: Bearer {{AccessToken}}
+
+{
+    "CustomerId": 1,
+    "TotalAmount": 1.4
+}

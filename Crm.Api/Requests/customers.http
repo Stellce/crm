@@ -1,19 +1,25 @@
 @CRM_HostAddress = https://localhost:7273
+@AccessToken = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxIiwiZW1haWwiOiJtYW5hZ2VyQHRlc3QuY29tIiwicm9sZSI6Ik1hbmFnZXIiLCJleHAiOjE3NzgyMzUyMzYsImlzcyI6ImNybS1hcGkiLCJhdWQiOiJjcm0tY2xpZW50In0.7Ry5aN-eDCkWQsq0I7NK6EobqH5cMak0I4zem5MnN_g
 
-### Get users
+### Get customers
 GET {{CRM_HostAddress}}/api/customers
 Accept: application/json
+Authorization: Bearer {{AccessToken}}
 
-### Create user
+### Create customer
 POST {{CRM_HostAddress}}/api/customers
 Content-Type: application/json
+Authorization: Bearer {{AccessToken}}
 
 {
     "name": "Alex",
     "email": "alex@test.com"
 }
 
-### Get user by id
+### Get customer by id
 GET {{CRM_HostAddress}}/api/customers/1
+Authorization: Bearer {{AccessToken}}
 
-###
+### Get Customer orders
+GET {{CRM_HostAddress}}/api/customers/1/orders
+Authorization: Bearer {{AccessToken}}

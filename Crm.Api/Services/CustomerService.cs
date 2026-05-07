@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Crm.Api.Services;
 
-public class CustomerService (
+public class CustomerService(
     AppDbContext context
 )
 {
@@ -31,6 +31,15 @@ public class CustomerService (
             .FirstOrDefaultAsync() ?? throw new AppException(ErrorCode.CustomerNotFound);
     }
 
+    public async Task<List<OrderResponse>> GetCustomerOrders(int customerId)
+    {
+        return await context.Orders
+            .AsNoTracking()
+            .Where(o => o.CustomerId == customerId)
+            .Select(o => new OrderResponse(o.Id, customerId, o.TotalAmount, o.CreatedAt))
+            .ToListAsync();
+    }
+
     public async Task<CustomerResponse> CreateCustomer(CreateCustomerRequest request)
     {
         if (await context.Customers.AnyAsync(c => c.Email == request.Email))
@@ -38,7 +47,8 @@ public class CustomerService (
             throw new AppException(ErrorCode.CustomerAlreadyExists);
         }
 
-        var customer = new Customer{
+        var customer = new Customer
+        {
             Name = request.Name,
             Email = request.Email
         };
@@ -47,8 +57,8 @@ public class CustomerService (
         await context.SaveChangesAsync();
 
         return new CustomerResponse(
-            customer.Id, 
-            customer.Name, 
+            customer.Id,
+            customer.Name,
             customer.Email
         );
     }
