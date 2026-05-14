@@ -17,7 +17,9 @@ builder.Services.AddControllers();
 
 builder.Services.AddDbContext<AppDbContext>(options =>
 {
-    options.UseSqlServer(connectionString);
+    options
+        .UseLazyLoadingProxies()   
+        .UseSqlServer(connectionString);
 });
 
 builder.Services.AddScoped<CustomerService>();
@@ -30,12 +32,6 @@ builder.Services
     .AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
     {
-        options.TokenValidationParameters = new TokenValidationParameters
-        {
-            RoleClaimType = "role",
-            NameClaimType = "sub"
-        };
-
         var jwtSettings = builder.Configuration.GetSection("Jwt");
 
         options.TokenValidationParameters = new TokenValidationParameters
@@ -50,8 +46,13 @@ builder.Services
 
             IssuerSigningKey = new SymmetricSecurityKey(
                 Encoding.UTF8.GetBytes(jwtSettings["Key"]!)
-            )
+            ),
+
+            
+            RoleClaimType = "role",
+            NameClaimType = "sub"
         };
+        options.MapInboundClaims = false;
     });
 
 builder.Services.Configure<ApiBehaviorOptions>(options =>

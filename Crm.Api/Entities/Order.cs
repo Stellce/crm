@@ -7,5 +7,5 @@ public class Order
     public decimal TotalAmount { get; set; }
     public DateTimeOffset CreatedAt { get; set; }
 
-    public Customer Customer { get; set; } = null!;
+    public virtual Customer Customer { get; set; } = null!;
 }
