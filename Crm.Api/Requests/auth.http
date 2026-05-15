@@ -8,3 +8,12 @@ Content-Type: application/json
     "Email": "manager@test.com",
     "Password": "12345678"
 }
+
+### Login Admin
+POST {{CRM_HostAddress}}/api/auth/login
+Content-Type: application/json
+
+{
+    "Email": "superadmin@crm.local",
+    "Password": "SuperAdmin123!"
+}

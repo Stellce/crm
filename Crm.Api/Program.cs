@@ -19,7 +19,15 @@ builder.Services.AddDbContext<AppDbContext>(options =>
 {
     options
         .UseLazyLoadingProxies()   
-        .UseSqlServer(connectionString);
+        .UseSqlServer(connectionString)
+        .UseSeeding((context, _) =>
+        {
+            DatabaseSeeder.Seed((AppDbContext)context, builder.Configuration);
+        })
+        .UseAsyncSeeding(async (context, _, CancellationToken) =>
+        {
+            await DatabaseSeeder.SeedAsync((AppDbContext)context, builder.Configuration);
+        });
 });
 
 builder.Services.AddScoped<CustomerService>();

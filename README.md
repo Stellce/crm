@@ -41,3 +41,16 @@ dotnet ef database update
 ```
 dotnet run
 ```
+
+6. Development seed
+
+When the API runs in `Development`, it creates a bootstrap SuperAdmin user if it does not already exist:
+
+```json
+{
+  "Email": "superadmin@crm.local",
+  "Password": "SuperAdmin123!"
+}
+```
+
+Use this account to log in and create the first admin/manager users. The seed values can be changed in `appsettings.Development.json` under `Seed:SuperAdmin`.
