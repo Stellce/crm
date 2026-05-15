@@ -1,12 +1,11 @@
 using Crm.Api.Dtos;
 using Crm.Api.Services;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Crm.Api.Controllers;
 
-[Authorize(Roles = "Admin, Manager")]
+[Authorize(Roles = "SuperAdmin, Admin, Manager")]
 [Route("api/[controller]")]
 [ApiController]
 public class CustomersController(

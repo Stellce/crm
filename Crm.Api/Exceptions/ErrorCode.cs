@@ -9,7 +9,9 @@ public enum ErrorCode
 
     UserNotFound,
 
-    InvalidCredentials,
+    Unauthorized,
+
+    Forbidden,
 
     InternalServerError
 }

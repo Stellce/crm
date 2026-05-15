@@ -24,16 +24,22 @@ public static class ErrorCodeExtensions
                 "Order not found"
             ),
 
-            ErrorCode.InvalidCredentials => new ErrorInfo(
+            ErrorCode.UserNotFound => new ErrorInfo(
+                StatusCodes.Status404NotFound,
+                "USER_NOT_FOUND",
+                "User not found"
+            ),
+
+            ErrorCode.Unauthorized => new ErrorInfo(
                 StatusCodes.Status401Unauthorized,
                 "UNAUTHORIZED",
                 "User not authorized"
             ),
 
-            ErrorCode.UserNotFound => new ErrorInfo(
-                StatusCodes.Status404NotFound,
-                "USER_NOT_FOUND",
-                "User not found"
+            ErrorCode.Forbidden => new ErrorInfo(
+                StatusCodes.Status403Forbidden,
+                "FORBIDDEN",
+                "User does not have permission to perform this action"
             ),
 
             _ => new ErrorInfo(

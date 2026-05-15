@@ -1,14 +1,5 @@
 @CRM_HostAddress = https://localhost:7273
 
-### Register User
-POST {{CRM_HostAddress}}/api/auth/register
-Content-Type: application/json
-
-{
-    "Email": "manager@test.com",
-    "Password": "12345678"
-}
-
 ### Login User
 POST {{CRM_HostAddress}}/api/auth/login
 Content-Type: application/json

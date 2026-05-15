@@ -2,7 +2,7 @@ using System.ComponentModel.DataAnnotations;
 
 namespace Crm.Api.Dtos;
 
-public record RegisterRequest(
+public record CreateUserRequest(
     [Required]
     [EmailAddress]
     string Email,

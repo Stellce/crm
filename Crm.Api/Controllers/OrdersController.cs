@@ -5,7 +5,7 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace Crm.Api.Controllers;
 
-[Authorize(Roles = "Admin, Manager")]
+[Authorize(Roles = "SuperAdmin, Admin, Manager")]
 [Route("api/[controller]")]
 [ApiController]
 public class OrdersController(OrderService orderService) : ControllerBase
