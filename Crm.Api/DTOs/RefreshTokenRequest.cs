@@ -2,10 +2,7 @@ using System.Text.Json.Serialization;
 
 namespace Crm.Api.Dtos;
 
-public record AuthResponse(
-    [property: JsonPropertyName("access_token")]
-    string AccessToken,
-    
+public record RefreshTokenRequest(
     [property: JsonPropertyName("refresh_token")]
     string RefreshToken
 );

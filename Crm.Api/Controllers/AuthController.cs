@@ -15,4 +15,17 @@ public class AuthController(
     {
         return Ok(await authService.LoginUser(request));
     }
+
+    [HttpPost("refresh")]
+    public async Task<ActionResult<AuthResponse>> Refresh(RefreshTokenRequest request)
+    {
+        return Ok(await authService.RefreshToken(request.RefreshToken));
+    }
+
+    [HttpPost("logout")]
+    public async Task<ActionResult> Logout(RefreshTokenRequest request)
+    {
+        await authService.LogoutUser(request.RefreshToken);
+        return NoContent();
+    }
 }

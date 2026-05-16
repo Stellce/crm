@@ -17,3 +17,11 @@ Content-Type: application/json
     "Email": "superadmin@crm.local",
     "Password": "SuperAdmin123!"
 }
+
+### Refresh Token
+POST {{CRM_HostAddress}}/api/auth/refresh
+Content-Type: application/json
+
+{
+    "refresh_token": "0fCyIuSwTid4Y+At7cqZwD2L+61TzcHfOoFcJTqIVFM6LOk/IWAoQ+JF1jdncaFpgFEu7cAhAGArW+bXJPR7vQ=="
+}
