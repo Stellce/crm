@@ -54,3 +54,15 @@ When the API runs in `Development`, it creates a bootstrap SuperAdmin user if it
 ```
 
 Use this account to log in and create the first admin/manager users. The seed values can be changed in `appsettings.Development.json` under `Seed:SuperAdmin`.
+
+## Options
+
+1. Configure Token Lifetime
+
+```json
+"Auth": {
+  "AccessTokenLifetime": "00:10:00",
+  "RefreshTokenLifetime": "00:30:00",
+  "TokenClockSkew": "00:00:30"
+}
+```

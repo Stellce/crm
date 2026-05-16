@@ -2,6 +2,7 @@ using System.Text;
 using Crm.Api.Data;
 using Crm.Api.Entities;
 using Crm.Api.Exceptions;
+using Crm.Api.Security;
 using Crm.Api.Services;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
@@ -42,12 +43,15 @@ builder.Services
     .AddJwtBearer(options =>
     {
         var jwtSettings = builder.Configuration.GetSection("Jwt");
+        var authOptions = builder.Configuration.GetSection("Auth").Get<AuthOptions>() 
+            ?? throw new InvalidOperationException("Auth options not found");
 
         options.TokenValidationParameters = new TokenValidationParameters
         {
             ValidateIssuer = true,
             ValidateAudience = true,
             ValidateLifetime = true,
+            ClockSkew = authOptions.TokenClockSkew,
             ValidateIssuerSigningKey = true,
 
             ValidIssuer = jwtSettings["Issuer"],
@@ -63,6 +67,13 @@ builder.Services
         };
         options.MapInboundClaims = false;
     });
+
+builder.Services.AddOptions<AuthOptions>()
+    .Bind(builder.Configuration.GetSection("Auth"))
+    .Validate(o => o.AccessTokenLifetime > TimeSpan.Zero, "AccessTokenLifetime must be greater than zero")
+    .Validate(o => o.RefreshTokenLifetime > TimeSpan.Zero, "RefreshTokenLifetime must be greater than AccessTokenLifetime")
+    .Validate(o => o.TokenClockSkew >= TimeSpan.Zero, "TokenClockSkew must be non-negative")
+    .ValidateOnStart();
 
 builder.Services.Configure<ApiBehaviorOptions>(options =>
 {

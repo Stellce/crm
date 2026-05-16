@@ -2,15 +2,18 @@ using Crm.Api.Data;
 using Crm.Api.Dtos;
 using Crm.Api.Entities;
 using Crm.Api.Exceptions;
+using Crm.Api.Security;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Options;
 
 namespace Crm.Api.Services;
 
 public class AuthService(
     AppDbContext context,
     IPasswordHasher<User> hasher,
-    JwtService jwtService
+    JwtService jwtService,
+    IOptions<AuthOptions> authOptions
 )
 {
     public async Task<AuthResponse> LoginUser(LoginRequest request)
@@ -30,7 +33,7 @@ public class AuthService(
             TokenHash = refreshTokenHash,
             UserId = user.Id,
             CreatedAt = DateTimeOffset.UtcNow,
-            ExpiresAt = DateTimeOffset.UtcNow.AddDays(7)
+            ExpiresAt = DateTimeOffset.UtcNow.Add(authOptions.Value.RefreshTokenLifetime)
         });
 
         await context.SaveChangesAsync();

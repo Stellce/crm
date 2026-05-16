@@ -4,12 +4,15 @@ using System.Security.Cryptography;
 using System.Text;
 using Crm.Api.Data;
 using Crm.Api.Entities;
+using Crm.Api.Security;
+using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 
 namespace Crm.Api.Services;
 
 public class JwtService(
-    IConfiguration configuration
+    IConfiguration configuration,
+    IOptions<AuthOptions> authOptions
 )
 {
     public string GenerateToken(User user)
@@ -34,7 +37,7 @@ public class JwtService(
             issuer: configuration["Jwt:Issuer"],
             audience: configuration["Jwt:Audience"],
             claims: claims,
-            expires: DateTime.UtcNow.AddMinutes(10),
+            expires: DateTime.UtcNow.Add(authOptions.Value.AccessTokenLifetime),
             signingCredentials: creds
         );
 
