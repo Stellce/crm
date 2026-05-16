@@ -58,6 +58,11 @@ public class UserService(
 
     public async Task<UserResponse> CreateManager(CreateUserRequest request)
     {
+        if (await context.Users.AnyAsync(u => u.Email == request.Email))
+        {
+            throw new AppException(ErrorCode.UserAlreadyExists);
+        }
+
         var user = new User
         {
             Email = request.Email,
@@ -80,6 +85,11 @@ public class UserService(
 
     public async Task<UserResponse> CreateAdmin(CreateUserRequest request)
     {
+        if (await context.Users.AnyAsync(u => u.Email == request.Email))
+        {
+            throw new AppException(ErrorCode.UserAlreadyExists);
+        }
+
         var user = new User
         {
             Email = request.Email,

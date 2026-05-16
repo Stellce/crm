@@ -24,6 +24,12 @@ public static class ErrorCodeExtensions
                 "Order not found"
             ),
 
+            ErrorCode.UserAlreadyExists => new ErrorInfo(
+                StatusCodes.Status409Conflict,
+                "USER_ALREADY_EXISTS",
+                "User already exists"
+            ),
+
             ErrorCode.UserNotFound => new ErrorInfo(
                 StatusCodes.Status404NotFound,
                 "USER_NOT_FOUND",

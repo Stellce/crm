@@ -7,6 +7,7 @@ public enum ErrorCode
 
     OrderNotFound,
 
+    UserAlreadyExists,
     UserNotFound,
 
     Unauthorized,

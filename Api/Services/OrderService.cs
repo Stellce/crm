@@ -25,6 +25,11 @@ public class OrderService(
 
     public async Task<OrderResponse> CreateOrder(CreateOrderRequest orderRequest)
     {
+        if (!await context.Customers.AnyAsync(c => c.Id == orderRequest.CustomerId))
+        {
+            throw new AppException(ErrorCode.CustomerNotFound);
+        }
+
         var order = new Order
         {
             CustomerId = orderRequest.CustomerId,
