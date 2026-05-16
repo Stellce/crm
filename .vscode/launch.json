@@ -8,7 +8,7 @@
             "name": "C#: Launch Startup Project",
             "type": "dotnet",
             "request": "launch",
-            "projectPath": "${workspaceFolder}/Crm.Api/Crm.Api.csproj"
+            "projectPath": "${workspaceFolder}/Api/Api.csproj"
         }
     ]
 }
