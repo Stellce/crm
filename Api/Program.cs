@@ -11,6 +11,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using FluentValidation;
 using Api.Validators;
+using System.Diagnostics;
 
 var builder = WebApplication.CreateBuilder(args);
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection") ??
@@ -68,6 +69,32 @@ builder.Services
             NameClaimType = "sub"
         };
         options.MapInboundClaims = false;
+
+        options.Events = new JwtBearerEvents
+        {
+            OnChallenge = async context =>
+            {
+                context.HandleResponse();
+
+                context.Response.StatusCode = StatusCodes.Status401Unauthorized;
+                context.Response.ContentType = "application/problem+json";
+
+                var problemDetails = new ProblemDetails
+                {
+                    Status = StatusCodes.Status401Unauthorized,
+                    Title = "Unauthorized",
+                    Detail = context.AuthenticateFailure is SecurityTokenExpiredException
+                        ? "Access token has expired"
+                        : "Invalid or missing access token",
+                    Type = "https://httpstatuses.com/401"
+                };
+
+                problemDetails.Extensions["traceId"] = Activity.Current?.Id ?? context.HttpContext.TraceIdentifier;
+                problemDetails.Extensions["timestamp"] = DateTimeOffset.UtcNow;
+
+                await context.Response.WriteAsJsonAsync(problemDetails);
+            }
+        };
     });
 
 builder.Services.AddOptions<AuthOptions>()
@@ -119,12 +146,12 @@ if (app.Environment.IsDevelopment())
     app.MapOpenApi();
 }
 
+app.UseExceptionHandler();
+
 app.UseHttpsRedirection();
 
 app.UseAuthentication();
 app.UseAuthorization();
-
-app.UseExceptionHandler();
 
 app.MapControllers();
 
