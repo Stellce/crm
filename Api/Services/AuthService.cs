@@ -49,7 +49,7 @@ public class AuthService(
             .Include(rt => rt.User)
             .SingleOrDefaultAsync(rt => rt.TokenHash == tokenHash);
 
-        if (storedToken is null ||!storedToken.IsActive)
+        if (storedToken is null || !storedToken.IsActive)
         {
             throw new AppException(ErrorCode.Unauthorized);
         }

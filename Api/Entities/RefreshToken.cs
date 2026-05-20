@@ -1,6 +1,7 @@
 namespace Api.Entities;
 
-public class RefreshToken {
+public class RefreshToken
+{
     public int Id { get; set; }
     public required string TokenHash { get; set; }
     public DateTimeOffset ExpiresAt { get; set; }

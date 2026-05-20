@@ -10,12 +10,54 @@ public class CustomerService(
     AppDbContext context
 )
 {
-    public async Task<List<CustomerResponse>> GetAllCustomersAsync()
+    public async Task<PagedResponse<CustomerResponse>> GetAllCustomersAsync(CustomerQueryParameters queryParams)
     {
-        return await context.Customers
-            .AsNoTracking()
-            .Select((customer) => new CustomerResponse(customer.Id, customer.Name, customer.Email))
+        var customersQuery = context.Customers
+            .AsNoTracking();
+
+        if (!string.IsNullOrWhiteSpace(queryParams.Search))
+        {
+            var search = queryParams.Search.Trim();
+
+            customersQuery = customersQuery.Where(customer =>
+                customer.Name.Contains(search) ||
+                customer.Email.Contains(search)
+            );
+        }
+
+        customersQuery = queryParams.SortBy.ToLower() switch
+        {
+            "name" => queryParams.IsDescending
+                ? customersQuery.OrderByDescending(customer => customer.Name)
+                : customersQuery.OrderBy(customer => customer.Name),
+
+            "email" => queryParams.IsDescending
+                ? customersQuery.OrderByDescending(customer => customer.Email)
+                : customersQuery.OrderBy(customer => customer.Email),
+
+            _ => queryParams.IsDescending
+                ? customersQuery.OrderByDescending(customer => customer.Id)
+                : customersQuery.OrderBy(customer => customer.Id)
+        };
+
+        var totalCount = await customersQuery.CountAsync();
+
+        var customers = await customersQuery
+            .Skip((queryParams.Page - 1) * queryParams.PageSize)
+            .Take(queryParams.PageSize)
+            .Select(customer => new CustomerResponse(
+                customer.Id,
+                customer.Name,
+                customer.Email
+            ))
             .ToListAsync();
+
+        return new PagedResponse<CustomerResponse>(
+            customers,
+            queryParams.Page,
+            queryParams.PageSize,
+            totalCount
+        );
     }
 
     public async Task<CustomerResponse> GetCustomerByIdAsync(int id)
@@ -31,13 +73,61 @@ public class CustomerService(
             .FirstOrDefaultAsync() ?? throw new AppException(ErrorCode.CustomerNotFound);
     }
 
-    public async Task<List<OrderResponse>> GetCustomerOrders(int customerId)
+    public async Task<PagedResponse<OrderResponse>> GetCustomerOrders(CustomerOrdersQueryParameters queryParams, int customerId)
     {
-        return await context.Orders
+        var ordersQuery = context.Orders
             .AsNoTracking()
-            .Where(o => o.CustomerId == customerId)
+            .Where(o => o.CustomerId == customerId);
+
+        if (queryParams.CreatedFrom is DateTimeOffset createdFrom)
+        {
+            ordersQuery = ordersQuery.Where(order => order.CreatedAt >= createdFrom);
+        }
+
+        if (queryParams.CreatedTo is DateTimeOffset createdTo)
+        {
+            ordersQuery = ordersQuery.Where(order => order.CreatedAt <= createdTo);
+        }
+
+        if (queryParams.MinTotalAmount is decimal minTotalAmount)
+        {
+            ordersQuery = ordersQuery.Where(order => order.TotalAmount > minTotalAmount);
+        }
+
+        if (queryParams.MaxTotalAmount is decimal maxTotalAmount)
+        {
+            ordersQuery = ordersQuery.Where(order => order.TotalAmount < maxTotalAmount);
+        }
+
+        ordersQuery = queryParams.SortBy switch
+        {
+            "totalamount" => queryParams.IsDescending
+                ? ordersQuery.OrderByDescending(order => order.TotalAmount)
+                : ordersQuery.OrderBy(order => order.TotalAmount),
+
+            "createdat" => queryParams.IsDescending
+                ? ordersQuery.OrderByDescending(order => order.CreatedAt)
+                : ordersQuery.OrderBy(order => order.CreatedAt),
+
+            _ => queryParams.IsDescending
+                ? ordersQuery.OrderByDescending(order => order.Id)
+                : ordersQuery.OrderBy(order => order.Id)
+        };
+
+        var totalCount = await ordersQuery.CountAsync();
+
+        var orders = await ordersQuery
+            .Skip(queryParams.Skip)
+            .Take(queryParams.PageSize)
             .Select(o => new OrderResponse(o.Id, customerId, o.TotalAmount, o.CreatedAt))
             .ToListAsync();
+
+        return new PagedResponse<OrderResponse>(
+            orders,
+            queryParams.Page,
+            queryParams.PageSize,
+            totalCount
+        );
     }
 
     public async Task<CustomerResponse> CreateCustomer(CreateCustomerRequest request)

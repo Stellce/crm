@@ -1,8 +1,8 @@
 @CRM_HostAddress = https://localhost:7273
-@AccessToken = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxIiwiZW1haWwiOiJtYW5hZ2VyQHRlc3QuY29tIiwicm9sZSI6Ik1hbmFnZXIiLCJleHAiOjE3NzgyMzUyMzYsImlzcyI6ImNybS1hcGkiLCJhdWQiOiJjcm0tY2xpZW50In0.7Ry5aN-eDCkWQsq0I7NK6EobqH5cMak0I4zem5MnN_g
+@AccessToken = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxIiwiZW1haWwiOiJtYW5hZ2VyQHRlc3QuY29tIiwicm9sZSI6IkFkbWluIiwiZXhwIjoxNzc5Mjk3Mjg4LCJpc3MiOiJjcm0tYXBpIiwiYXVkIjoiY3JtLWNsaWVudCJ9.8hv8h7dAx5qMu9023qXupqf48m_tHUFqvxjtFnad07o
 
 ### Get customers
-GET {{CRM_HostAddress}}/api/customers
+GET {{CRM_HostAddress}}/api/customers?page=1&pageSize=10&sortBy=name&sortDirection=desc
 Accept: application/json
 Authorization: Bearer {{AccessToken}}
 
@@ -21,5 +21,14 @@ GET {{CRM_HostAddress}}/api/customers/1
 Authorization: Bearer {{AccessToken}}
 
 ### Get Customer orders
-GET {{CRM_HostAddress}}/api/customers/1/orders
+GET {{CRM_HostAddress}}/api/customers/1/orders?page=1&pageSize=10&minTotalAmount=0&maxTotalAmount=10&createdFrom=2026-05-01T19:20:06&createdTo=2026-05-18T19:20:06.2885903&sortBy=totalAmount&sortDirection=desc
 Authorization: Bearer {{AccessToken}}
+
+### Patch Customer
+PATCH {{CRM_HostAddress}}/api/customers/1003
+Content-Type: application/json
+Authorization: Bearer {{AccessToken}}
+
+{
+    "email": "alexa@test.com"
+}

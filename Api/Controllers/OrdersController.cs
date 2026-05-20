@@ -1,6 +1,9 @@
 using Api.Dtos;
 using Api.Services;
+using Api.Validators;
+using FluentValidation;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Api.Controllers;
@@ -10,6 +13,12 @@ namespace Api.Controllers;
 [ApiController]
 public class OrdersController(OrderService orderService) : ControllerBase
 {
+    [HttpGet]
+    public async Task<ActionResult<PagedResponse<OrderResponse>>> GetAllOrders(OrderQueryParameters queryParams)
+    {
+        return Ok(await orderService.GetAllOrdersAsync(queryParams));
+    }
+
     [HttpGet("{id:int}")]
     public async Task<ActionResult<OrderResponse>> GetOrderById(int id)
     {

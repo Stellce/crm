@@ -1,5 +1,10 @@
 @CRM_HostAddress = https://localhost:7273
-@AccessToken = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxIiwiZW1haWwiOiJtYW5hZ2VyQHRlc3QuY29tIiwicm9sZSI6Ik1hbmFnZXIiLCJleHAiOjE3NzgyMzUyMzYsImlzcyI6ImNybS1hcGkiLCJhdWQiOiJjcm0tY2xpZW50In0.7Ry5aN-eDCkWQsq0I7NK6EobqH5cMak0I4zem5MnN_g
+@AccessToken = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxIiwiZW1haWwiOiJtYW5hZ2VyQHRlc3QuY29tIiwicm9sZSI6IkFkbWluIiwiZXhwIjoxNzc5MTE1MDUzLCJpc3MiOiJjcm0tYXBpIiwiYXVkIjoiY3JtLWNsaWVudCJ9.rCqpqs4_kkisj4xxKWcR7xB0LcOBu7lQ20kzXazoBW8
+
+### Get Orders
+GET {{CRM_HostAddress}}/api/orders?page=1&pageSize=10&customerId=1&minTotalAmount=0&maxTotalAmount=10&createdFrom=2026-05-07T19:20:06&createdTo=2026-05-18T19:20:06.2885903&sortBy=createdAt&sortDirection=desc
+Accept: application/json
+Authorization: Bearer {{AccessToken}}
 
 ### Get Order
 GET {{CRM_HostAddress}}/api/orders/1

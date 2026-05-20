@@ -12,6 +12,7 @@ using Microsoft.IdentityModel.Tokens;
 using FluentValidation;
 using Api.Validators;
 using System.Diagnostics;
+using FluentValidation.AspNetCore;
 
 var builder = WebApplication.CreateBuilder(args);
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection") ??
@@ -22,7 +23,7 @@ builder.Services.AddControllers();
 builder.Services.AddDbContext<AppDbContext>(options =>
 {
     options
-        .UseLazyLoadingProxies()   
+        .UseLazyLoadingProxies()
         .UseSqlServer(connectionString)
         .UseSeeding((context, _) =>
         {
@@ -46,7 +47,7 @@ builder.Services
     .AddJwtBearer(options =>
     {
         var jwtSettings = builder.Configuration.GetSection("Jwt");
-        var authOptions = builder.Configuration.GetSection("Auth").Get<AuthOptions>() 
+        var authOptions = builder.Configuration.GetSection("Auth").Get<AuthOptions>()
             ?? throw new InvalidOperationException("Auth options not found");
 
         options.TokenValidationParameters = new TokenValidationParameters
@@ -64,7 +65,7 @@ builder.Services
                 Encoding.UTF8.GetBytes(jwtSettings["Key"]!)
             ),
 
-            
+
             RoleClaimType = "role",
             NameClaimType = "sub"
         };
@@ -132,10 +133,8 @@ builder.Services.AddProblemDetails(options =>
 
 builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
 
-builder.Services.AddValidatorsFromAssemblyContaining<CreateCustomerRequestValidator>();
-builder.Services.AddValidatorsFromAssemblyContaining<PatchCustomerRequestValidator>();
-builder.Services.AddValidatorsFromAssemblyContaining<CreateOrderRequestValidator>();
-builder.Services.AddValidatorsFromAssemblyContaining<CreateUserRequestValidator>();
+builder.Services.AddFluentValidationAutoValidation();
+builder.Services.AddValidatorsFromAssemblyContaining<ValidationMarker>();
 
 builder.Services.AddOpenApi();
 

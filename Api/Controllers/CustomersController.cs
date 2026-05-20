@@ -1,5 +1,6 @@
 using Api.Dtos;
 using Api.Services;
+using FluentValidation;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -13,9 +14,9 @@ public class CustomersController(
 ) : ControllerBase
 {
     [HttpGet]
-    public async Task<ActionResult<List<CustomerResponse>>> GetAllCustomers()
+    public async Task<ActionResult<PagedResponse<CustomerResponse>>> GetAllCustomers(CustomerQueryParameters queryParams)
     {
-        return Ok(await customerService.GetAllCustomersAsync());
+        return Ok(await customerService.GetAllCustomersAsync(queryParams));
     }
 
     [HttpGet("{id:int}")]
@@ -26,9 +27,9 @@ public class CustomersController(
     }
 
     [HttpGet("{id:int}/orders")]
-    public async Task<ActionResult<List<OrderResponse>>> GetCustomerOrders(int id)
+    public async Task<ActionResult<PagedResponse<OrderResponse>>> GetCustomerOrders(CustomerOrdersQueryParameters queryParams, int id)
     {
-        return Ok(await customerService.GetCustomerOrders(id));
+        return Ok(await customerService.GetCustomerOrders(queryParams, id));
     }
 
     [HttpPost]

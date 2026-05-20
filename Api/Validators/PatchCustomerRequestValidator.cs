@@ -7,8 +7,9 @@ public class PatchCustomerRequestValidator : AbstractValidator<PatchCustomerRequ
 {
     public PatchCustomerRequestValidator()
     {
-        RuleFor(x => x)
-            .Must(x => x.Name != null || x.Email != null)
+        RuleFor(x => x.Name)
+            .NotNull()
+            .When(x => x.Email is null)
             .WithMessage("At least one of Name or Email must be provided.");
 
         RuleFor(x => x.Name)
