@@ -1,4 +1,5 @@
 using Api.Dtos;
+using Api.Security;
 using Api.Services;
 using FluentValidation;
 using Microsoft.AspNetCore.Authorization;
@@ -6,7 +7,7 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace Api.Controllers;
 
-[Authorize(Roles = "SuperAdmin, Admin, Manager")]
+[Authorize(Policy = AppPolicies.ManageCustomers)]
 [Route("api/[controller]")]
 [ApiController]
 public class CustomersController(

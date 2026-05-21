@@ -1,4 +1,5 @@
 using Api.Dtos;
+using Api.Security;
 using Api.Services;
 using Api.Validators;
 using FluentValidation;
@@ -8,7 +9,7 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace Api.Controllers;
 
-[Authorize(Roles = "SuperAdmin, Admin, Manager")]
+[Authorize(Policy = AppPolicies.ManageOrders)]
 [Route("api/[controller]")]
 [ApiController]
 public class OrdersController(OrderService orderService) : ControllerBase

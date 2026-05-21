@@ -110,7 +110,40 @@ builder.Services.AddOptions<AuthOptions>()
     .ValidateOnStart();
 
     
-builder.Services.AddAuthorization();
+builder.Services.AddAuthorization(options =>
+{
+    options.AddPolicy(AppPolicies.ManageCustomers, policy =>
+        policy
+            .RequireAuthenticatedUser()
+            .RequireRole(
+                nameof(UserRole.SuperAdmin),
+                nameof(UserRole.Admin),
+                nameof(UserRole.Manager)
+            ));
+
+    options.AddPolicy(AppPolicies.ManageOrders, policy => 
+        policy
+            .RequireAuthenticatedUser()
+            .RequireRole(
+                nameof(UserRole.SuperAdmin),
+                nameof(UserRole.Admin),
+                nameof(UserRole.Manager)
+            ));
+
+    options.AddPolicy(AppPolicies.ManageUsers, policy =>
+        policy
+            .RequireAuthenticatedUser()
+            .RequireRole(
+                nameof(UserRole.SuperAdmin),
+                nameof(UserRole.Admin)
+            ));
+
+    options.AddPolicy(AppPolicies.CreateAdmins, policy => 
+        policy
+            .RequireAuthenticatedUser()
+            .RequireRole(
+                nameof(UserRole.SuperAdmin)));
+});
 
 builder.Services.Configure<ApiBehaviorOptions>(options =>
 {
