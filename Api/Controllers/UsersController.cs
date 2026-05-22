@@ -1,9 +1,9 @@
-using Api.Dtos;
-using Api.Exceptions;
-using Api.Security;
-using Api.Services;
+using Application.DTOs;
+using Application.Exceptions;
+using Application.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Api.Security;
 
 namespace Api.Controllers;
 
@@ -20,7 +20,7 @@ public class UsersController(
         var currentUserId = User.FindFirst("sub")?.Value;
 
         if (!int.TryParse(currentUserId, out var currentUserIdInt))
-            throw new AppException(ErrorCode.Unauthorized);
+            throw new AppException(ErrorCode.InvalidAccessToken);
 
         return Ok(await userService.GetUsers(currentUserIdInt));
     }
@@ -31,7 +31,7 @@ public class UsersController(
         var currentUserId = User.FindFirst("sub")?.Value;
 
         if (!int.TryParse(currentUserId, out var currentUserIdInt))
-            throw new AppException(ErrorCode.Unauthorized);
+            throw new AppException(ErrorCode.InvalidAccessToken);
 
         return Ok(await userService.GetUserById(targetUserId, currentUserIdInt));
     }
@@ -57,7 +57,7 @@ public class UsersController(
         var currentUserId = User.FindFirst("sub")?.Value;
 
         if (!int.TryParse(currentUserId, out var currentUserIdInt))
-            throw new AppException(ErrorCode.Unauthorized);
+            throw new AppException(ErrorCode.InvalidAccessToken);
 
         await userService.DeleteUser(targetUserId, currentUserIdInt);
         return NoContent();

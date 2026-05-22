@@ -1,58 +1,27 @@
+using Application.Exceptions;
+using Microsoft.AspNetCore.Http;
+
 namespace Api.Exceptions;
 
 public static class ErrorCodeExtensions
 {
-    public static ErrorInfo ToErrorInfo(this ErrorCode code)
+    public static int ToStatusCode(this ErrorCode errorCode)
     {
-        return code switch
+        return errorCode switch
         {
-            ErrorCode.CustomerNotFound => new ErrorInfo(
-                StatusCodes.Status404NotFound,
-                "CUSTOMER_NOT_FOUND",
-                "Customer not found"
-            ),
+            ErrorCode.CustomerNotFound => StatusCodes.Status404NotFound,
+            ErrorCode.CustomerAlreadyExists => StatusCodes.Status409Conflict,
 
-            ErrorCode.CustomerAlreadyExists => new ErrorInfo(
-                StatusCodes.Status409Conflict,
-                "CUSTOMER_ALREADY_EXISTS",
-                "Customer already exists"
-            ),
+            ErrorCode.OrderNotFound => StatusCodes.Status404NotFound,
 
-            ErrorCode.OrderNotFound => new ErrorInfo(
-                StatusCodes.Status404NotFound,
-                "ORDER_NOT_FOUND",
-                "Order not found"
-            ),
+            ErrorCode.UserAlreadyExists => StatusCodes.Status409Conflict,
+            ErrorCode.UserNotFound => StatusCodes.Status404NotFound,
 
-            ErrorCode.UserAlreadyExists => new ErrorInfo(
-                StatusCodes.Status409Conflict,
-                "USER_ALREADY_EXISTS",
-                "User already exists"
-            ),
+            ErrorCode.InvalidCredentials => StatusCodes.Status401Unauthorized,
+            ErrorCode.InvalidAccessToken => StatusCodes.Status401Unauthorized,
+            ErrorCode.Forbidden => StatusCodes.Status403Forbidden,
 
-            ErrorCode.UserNotFound => new ErrorInfo(
-                StatusCodes.Status404NotFound,
-                "USER_NOT_FOUND",
-                "User not found"
-            ),
-
-            ErrorCode.Unauthorized => new ErrorInfo(
-                StatusCodes.Status401Unauthorized,
-                "UNAUTHORIZED",
-                "User not authorized"
-            ),
-
-            ErrorCode.Forbidden => new ErrorInfo(
-                StatusCodes.Status403Forbidden,
-                "FORBIDDEN",
-                "User does not have permission to perform this action"
-            ),
-
-            _ => new ErrorInfo(
-                StatusCodes.Status500InternalServerError,
-                "INTERNAL_SERVER_ERROR",
-                "Unexpected server error"
-            )
+            _ => StatusCodes.Status500InternalServerError
         };
     }
 }

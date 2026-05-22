@@ -1,106 +1,23 @@
-using System.Text;
-using Api.Data;
-using Api.Entities;
-using Api.Exceptions;
-using Api.Security;
-using Api.Services;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
-using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-using Microsoft.IdentityModel.Tokens;
-using FluentValidation;
-using Api.Validators;
-using System.Diagnostics;
 using FluentValidation.AspNetCore;
 using Microsoft.AspNetCore.Authentication;
-using Microsoft.AspNetCore.OpenApi;
 using Microsoft.OpenApi;
 using Microsoft.AspNetCore.Authorization;
+using Application;
+using Infrastructure;
+using Api.Security;
+using Application.Security;
+using Api.Exceptions;
 
 var builder = WebApplication.CreateBuilder(args);
-var connectionString = builder.Configuration.GetConnectionString("DefaultConnection") ??
-    throw new InvalidOperationException("Connection string not found");
 
 builder.Services.AddControllers();
 
-builder.Services.AddDbContext<AppDbContext>(options =>
-{
-    options
-        .UseLazyLoadingProxies()
-        .UseSqlServer(connectionString)
-        .UseSeeding((context, _) =>
-        {
-            DatabaseSeeder.Seed((AppDbContext)context, builder.Configuration);
-        })
-        .UseAsyncSeeding(async (context, _, CancellationToken) =>
-        {
-            await DatabaseSeeder.SeedAsync((AppDbContext)context, builder.Configuration);
-        });
-});
+builder.Services.AddApplication();
+builder.Services.AddInfrastructure(builder.Configuration);
+builder.Services.AddJwtAuthentication(builder.Configuration);
 
-builder.Services.AddScoped<CustomerService>();
-builder.Services.AddScoped<OrderService>();
-builder.Services.AddScoped<UserService>();
-builder.Services.AddScoped<AuthService>();
-builder.Services.AddScoped<IPasswordHasher<User>, PasswordHasher<User>>();
-builder.Services.AddScoped<JwtService>();
-
-builder.Services
-    .AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
-    .AddJwtBearer(options =>
-    {
-        var jwtSettings = builder.Configuration.GetSection("Jwt");
-        var authOptions = builder.Configuration.GetSection("Auth").Get<AuthOptions>()
-            ?? throw new InvalidOperationException("Auth options not found");
-
-        options.TokenValidationParameters = new TokenValidationParameters
-        {
-            ValidateIssuer = true,
-            ValidateAudience = true,
-            ValidateLifetime = true,
-            ClockSkew = authOptions.TokenClockSkew,
-            ValidateIssuerSigningKey = true,
-
-            ValidIssuer = jwtSettings["Issuer"],
-            ValidAudience = jwtSettings["Audience"],
-
-            IssuerSigningKey = new SymmetricSecurityKey(
-                Encoding.UTF8.GetBytes(jwtSettings["Key"]!)
-            ),
-
-
-            RoleClaimType = "role",
-            NameClaimType = "sub"
-        };
-        options.MapInboundClaims = false;
-
-        options.Events = new JwtBearerEvents
-        {
-            OnChallenge = async context =>
-            {
-                context.HandleResponse();
-
-                context.Response.StatusCode = StatusCodes.Status401Unauthorized;
-                context.Response.ContentType = "application/problem+json";
-
-                var problemDetails = new ProblemDetails
-                {
-                    Status = StatusCodes.Status401Unauthorized,
-                    Title = "Unauthorized",
-                    Detail = context.AuthenticateFailure is SecurityTokenExpiredException
-                        ? "Access token has expired"
-                        : "Invalid or missing access token",
-                    Type = "https://httpstatuses.com/401"
-                };
-
-                problemDetails.Extensions["traceId"] = Activity.Current?.Id ?? context.HttpContext.TraceIdentifier;
-                problemDetails.Extensions["timestamp"] = DateTimeOffset.UtcNow;
-
-                await context.Response.WriteAsJsonAsync(problemDetails);
-            }
-        };
-    });
 
 builder.Services.AddOptions<AuthOptions>()
     .Bind(builder.Configuration.GetSection("Auth"))
@@ -109,41 +26,8 @@ builder.Services.AddOptions<AuthOptions>()
     .Validate(o => o.TokenClockSkew >= TimeSpan.Zero, "TokenClockSkew must be non-negative")
     .ValidateOnStart();
 
-    
-builder.Services.AddAuthorization(options =>
-{
-    options.AddPolicy(AppPolicies.ManageCustomers, policy =>
-        policy
-            .RequireAuthenticatedUser()
-            .RequireRole(
-                nameof(UserRole.SuperAdmin),
-                nameof(UserRole.Admin),
-                nameof(UserRole.Manager)
-            ));
 
-    options.AddPolicy(AppPolicies.ManageOrders, policy => 
-        policy
-            .RequireAuthenticatedUser()
-            .RequireRole(
-                nameof(UserRole.SuperAdmin),
-                nameof(UserRole.Admin),
-                nameof(UserRole.Manager)
-            ));
-
-    options.AddPolicy(AppPolicies.ManageUsers, policy =>
-        policy
-            .RequireAuthenticatedUser()
-            .RequireRole(
-                nameof(UserRole.SuperAdmin),
-                nameof(UserRole.Admin)
-            ));
-
-    options.AddPolicy(AppPolicies.CreateAdmins, policy => 
-        policy
-            .RequireAuthenticatedUser()
-            .RequireRole(
-                nameof(UserRole.SuperAdmin)));
-});
+builder.Services.AddAppAuthorization();
 
 builder.Services.Configure<ApiBehaviorOptions>(options =>
 {
@@ -174,7 +58,6 @@ builder.Services.AddProblemDetails(options =>
 builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
 
 builder.Services.AddFluentValidationAutoValidation();
-builder.Services.AddValidatorsFromAssemblyContaining<ValidationMarker>();
 
 builder.Services.AddOpenApi(options =>
 {
@@ -230,7 +113,6 @@ var app = builder.Build();
 if (app.Environment.IsDevelopment())
 {
     app.MapOpenApi();
-
 
     app.UseSwaggerUI(options =>
     {

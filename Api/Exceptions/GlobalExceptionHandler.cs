@@ -1,3 +1,4 @@
+using Application.Exceptions;
 using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.AspNetCore.Mvc;
 
@@ -17,13 +18,14 @@ public sealed class GlobalExceptionHandler(
         if (exception is AppException appException)
         {
             var error = appException.ErrorCode.ToErrorInfo();
+            var statusCode = appException.ErrorCode.ToStatusCode();
 
             problemDetails = new ProblemDetails
             {
-                Status = error.StatusCode,
+                Status = statusCode,
                 Title = error.PublicCode,
                 Detail = error.Message,
-                Type = $"https://httpstatuses.com/{error.StatusCode}"
+                Type = $"https://httpstatuses.com/{statusCode}"
             };
         }
         else

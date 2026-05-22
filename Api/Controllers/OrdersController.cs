@@ -1,11 +1,8 @@
-using Api.Dtos;
-using Api.Security;
-using Api.Services;
-using Api.Validators;
-using FluentValidation;
+using Application.DTOs;
+using Application.Services;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
+using Api.Security;
 
 namespace Api.Controllers;
 

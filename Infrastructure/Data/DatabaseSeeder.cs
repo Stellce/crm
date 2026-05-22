@@ -1,0 +1,65 @@
+using Domain.Entities;
+using Domain.Security;
+using Application.Abstractions;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.Extensions.Configuration;
+
+namespace Infrastructure.Data;
+
+public static class DatabaseSeeder
+{
+    public static void Seed(IAppDbContext context, IConfiguration configuration)
+    {
+        if (!context.Users.Any(user => user.Email == configuration["Seed:SuperAdmin:Email"]))
+        {
+            var superAdminSection = configuration.GetSection("Seed:SuperAdmin");
+
+            var email = superAdminSection["Email"];
+            var password = superAdminSection["Password"];
+
+            if (string.IsNullOrEmpty(email) || string.IsNullOrEmpty(password))
+            {
+                throw new Exception("SuperAdmin credentials are not properly configured.");
+            }
+
+            var hasher = new PasswordHasher<User>();
+            var user = new User
+            {
+                Email = email,
+                Role = UserRole.SuperAdmin,
+                CreatedAt = DateTimeOffset.UtcNow
+            };
+            user.PasswordHash = hasher.HashPassword(user, password);
+
+            context.Users.Add(user);
+            context.SaveChangesAsync();
+        }
+    }
+    public static async Task SeedAsync(IAppDbContext context, IConfiguration configuration)
+    {
+        if (!context.Users.Any(user => user.Email == configuration["Seed:SuperAdmin:Email"]))
+        {
+            var superAdminSection = configuration.GetSection("Seed:SuperAdmin");
+
+            var email = superAdminSection["Email"];
+            var password = superAdminSection["Password"];
+
+            if (string.IsNullOrEmpty(email) || string.IsNullOrEmpty(password))
+            {
+                throw new Exception("SuperAdmin credentials are not properly configured.");
+            }
+
+            var hasher = new PasswordHasher<User>();
+            var user = new User
+            {
+                Email = email,
+                Role = UserRole.SuperAdmin,
+                CreatedAt = DateTimeOffset.UtcNow
+            };
+            user.PasswordHash = hasher.HashPassword(user, password);
+
+            context.Users.Add(user);
+            await context.SaveChangesAsync();
+        }
+    }
+}
