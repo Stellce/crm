@@ -30,7 +30,7 @@ public static class DependencyInjection
                 })
                 .UseAsyncSeeding(async (context, _, cancellationToken) =>
                 {
-                    await DatabaseSeeder.SeedAsync((AppDbContext) context, configuration);
+                    await DatabaseSeeder.SeedAsync((AppDbContext) context, configuration, cancellationToken);
                 });
         });
 

@@ -32,10 +32,13 @@ public static class DatabaseSeeder
             user.PasswordHash = hasher.HashPassword(user, password);
 
             context.Users.Add(user);
-            context.SaveChangesAsync();
+            context.SaveChanges();
         }
     }
-    public static async Task SeedAsync(IAppDbContext context, IConfiguration configuration)
+    public static async Task SeedAsync(
+        IAppDbContext context, 
+        IConfiguration configuration,
+        CancellationToken cancellationToken = default)
     {
         if (!context.Users.Any(user => user.Email == configuration["Seed:SuperAdmin:Email"]))
         {
@@ -59,7 +62,7 @@ public static class DatabaseSeeder
             user.PasswordHash = hasher.HashPassword(user, password);
 
             context.Users.Add(user);
-            await context.SaveChangesAsync();
+            await context.SaveChangesAsync(cancellationToken);
         }
     }
 }
