@@ -37,7 +37,8 @@ public class UsersController(
     }
 
     [HttpPost("manager")]
-    public async Task<ActionResult<UserResponse>> CreateManager(CreateUserRequest request)
+    public async Task<ActionResult<UserResponse>> CreateManager(
+        [FromBody] CreateUserRequest request)
     {
         var user = await userService.CreateManager(request);
         return CreatedAtAction(nameof(GetUserById), new { targetUserId = user.Id }, user);
@@ -45,7 +46,8 @@ public class UsersController(
 
     [Authorize(Policy = AppPolicies.CreateAdmins)]
     [HttpPost("admin")]
-    public async Task<ActionResult<UserResponse>> CreateAdmin(CreateUserRequest request)
+    public async Task<ActionResult<UserResponse>> CreateAdmin(
+        [FromBody] CreateUserRequest request)
     {
         var user = await userService.CreateAdmin(request);
         return CreatedAtAction(nameof(GetUserById), new { targetUserId = user.Id }, user);

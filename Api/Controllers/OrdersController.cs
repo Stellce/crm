@@ -12,7 +12,8 @@ namespace Api.Controllers;
 public class OrdersController(OrderService orderService) : ControllerBase
 {
     [HttpGet]
-    public async Task<ActionResult<PagedResponse<OrderResponse>>> GetAllOrders(OrderQueryParameters queryParams)
+    public async Task<ActionResult<PagedResponse<OrderResponse>>> GetAllOrders(
+        [FromQuery] OrderQueryParameters queryParams)
     {
         return Ok(await orderService.GetAllOrdersAsync(queryParams));
     }
@@ -24,7 +25,8 @@ public class OrdersController(OrderService orderService) : ControllerBase
     }
 
     [HttpPost]
-    public async Task<ActionResult> CreateOrder(CreateOrderRequest request)
+    public async Task<ActionResult> CreateOrder(
+        [FromBody] CreateOrderRequest request)
     {
         var createdOrder = await orderService.CreateOrder(request);
         return CreatedAtAction(

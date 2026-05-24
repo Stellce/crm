@@ -11,19 +11,22 @@ public class AuthController(
 ) : ControllerBase
 {
     [HttpPost("login")]
-    public async Task<ActionResult<AuthResponse>> Login(LoginRequest request)
+    public async Task<ActionResult<AuthResponse>> Login(
+        [FromBody] LoginRequest request)
     {
         return Ok(await authService.LoginUser(request));
     }
 
     [HttpPost("refresh")]
-    public async Task<ActionResult<AuthResponse>> Refresh(RefreshTokenRequest request)
+    public async Task<ActionResult<AuthResponse>> Refresh(
+        [FromBody] RefreshTokenRequest request)
     {
         return Ok(await authService.RefreshToken(request.RefreshToken));
     }
 
     [HttpPost("logout")]
-    public async Task<ActionResult> Logout(RefreshTokenRequest request)
+    public async Task<ActionResult> Logout(
+        [FromBody] RefreshTokenRequest request)
     {
         await authService.LogoutUser(request.RefreshToken);
         return NoContent();

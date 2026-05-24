@@ -14,7 +14,8 @@ public class CustomersController(
 ) : ControllerBase
 {
     [HttpGet]
-    public async Task<ActionResult<PagedResponse<CustomerResponse>>> GetAllCustomers(CustomerQueryParameters queryParams)
+    public async Task<ActionResult<PagedResponse<CustomerResponse>>> GetAllCustomers(
+        [FromQuery] CustomerQueryParameters queryParams)
     {
         return Ok(await customerService.GetAllCustomersAsync(queryParams));
     }
@@ -27,13 +28,16 @@ public class CustomersController(
     }
 
     [HttpGet("{id:int}/orders")]
-    public async Task<ActionResult<PagedResponse<OrderResponse>>> GetCustomerOrders(CustomerOrdersQueryParameters queryParams, int id)
+    public async Task<ActionResult<PagedResponse<OrderResponse>>> GetCustomerOrders(
+        [FromQuery] CustomerOrdersQueryParameters queryParams, 
+        int id)
     {
         return Ok(await customerService.GetCustomerOrders(queryParams, id));
     }
 
     [HttpPost]
-    public async Task<ActionResult<CustomerResponse>> CreateCustomer(CreateCustomerRequest request)
+    public async Task<ActionResult<CustomerResponse>> CreateCustomer(
+        [FromBody] CreateCustomerRequest request)
     {
         var createdCustomer = await customerService.CreateCustomer(request);
 
@@ -45,14 +49,18 @@ public class CustomersController(
     }
 
     [HttpPut("{id:int}")]
-    public async Task<ActionResult> PutCustomer(CreateCustomerRequest request, int id)
+    public async Task<ActionResult> PutCustomer(
+        [FromBody] CreateCustomerRequest request, 
+        int id)
     {
         await customerService.PutCustomer(request, id);
         return NoContent();
     }
 
     [HttpPatch("{id:int}")]
-    public async Task<ActionResult> PatchCustomer(PatchCustomerRequest request, int id)
+    public async Task<ActionResult> PatchCustomer(
+        [FromBody] PatchCustomerRequest request, 
+        int id)
     {
         await customerService.PatchCustomer(request, id);
         return NoContent();
