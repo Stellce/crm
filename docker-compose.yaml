@@ -1,10 +1,75 @@
+name: crm
+
 services:
   db:
-    image: mcr.microsoft.com/mssql/server:2025-latest
+    image: mcr.microsoft.com/mssql/server:2025-CU5-ubuntu-24.04
     container_name: crm-db
     environment:
-      - ACCEPT_EULA=Y
+      ACCEPT_EULA: "Y"
+      MSSQL_PID: "Developer"
+      MSSQL_SA_PASSWORD: ${MSSQL_SA_PASSWORD}
     env_file:
       - .env
     ports:
       - "14333:1433"
+    volumes:
+      - sqlserver_data:/var/opt/mssql
+    healthcheck:
+      test: ["CMD-SHELL", "timeout 2 bash -c '</dev/tcp/localhost/1433' || exit 1"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+      start_period: 20s
+    
+  migrate:
+    image: mcr.microsoft.com/dotnet/sdk:10.0
+    container_name: crm-migrate
+    working_dir: /src
+    volumes:
+      - .:/src
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      ConnectionStrings__DefaultConnection: "Server=db,1433;Database=${SQLSERVER_DB:-CrmDb};User Id=sa;Password=${MSSQL_SA_PASSWORD};Encrypt=True;TrustServerCertificate=True;"
+      Jwt__Key: ${JWT_KEY:-dev-super-secret-key-change-me-please-32-chars}
+      Jwt__Issuer: ${JWT_ISSUER:-crm-api}
+      Jwt__Audience: ${JWT_AUDIENCE:-crm-client}
+      Auth__AccessTokenLifetime: ${AUTH_ACCESS_TOKEN_LIFETIME:-00:10:00}
+      Auth__RefreshTokenLifetime: ${AUTH_REFRESH_TOKEN_LIFETIME:-00:30:00}
+      Auth__TokenClockSkew: ${AUTH_TOKEN_CLOCK_SKEW:-00:00:30}
+      Seed__SuperAdmin__Email: ${SEED_SUPERADMIN_EMAIL:-superadmin@crm.local}
+      Seed__SuperAdmin__Password: ${SEED_SUPERADMIN_PASSWORD:-SuperAdmin123!}
+    command: >
+      sh -c "dotnet tool install --global dotnet-ef --version 10.0.8 &&
+             export PATH=\"$$PATH:/root/.dotnet/tools\" &&
+             dotnet ef database update --project Infrastructure/Infrastructure.csproj --startup-project Api/Api.csproj"
+    restart: "no"
+
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: crm-api
+    depends_on:
+      db:
+        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      ASPNETCORE_URLS: http://+:8080
+      ConnectionStrings__DefaultConnection: "Server=db,1433;Database=${SQLSERVER_DB:-CrmDb};User Id=sa;Password=${MSSQL_SA_PASSWORD};Encrypt=True;TrustServerCertificate=True;"
+      Jwt__Key: ${JWT_KEY:-dev-super-secret-key-change-me-please-32-chars}
+      Jwt__Issuer: ${JWT_ISSUER:-crm-api}
+      Jwt__Audience: ${JWT_AUDIENCE:-crm-client}
+      Auth__AccessTokenLifetime: ${AUTH_ACCESS_TOKEN_LIFETIME:-00:10:00}
+      Auth__RefreshTokenLifetime: ${AUTH_REFRESH_TOKEN_LIFETIME:-00:30:00}
+      Auth__TokenClockSkew: ${AUTH_TOKEN_CLOCK_SKEW:-00:00:30}
+      Seed__SuperAdmin__Email: ${SEED_SUPERADMIN_EMAIL:-superadmin@crm.local}
+      Seed__SuperAdmin__Password: ${SEED_SUPERADMIN_PASSWORD:-SuperAdmin123!}
+    ports:
+      - "5144:8080"
+
+volumes:
+  sqlserver_data:

@@ -1,0 +1,17 @@
+name: crm-dev
+
+services:
+  db:
+    image: mcr.microsoft.com/mssql/server:2025-CU5-ubuntu-24.04
+    container_name: crm-db-dev
+    environment:
+      ACCEPT_EULA: "Y"
+      MSSQL_PID: "Developer"
+      MSSQL_SA_PASSWORD: ${MSSQL_SA_PASSWORD}      
+    ports:
+      - "14333:1433"
+    volumes:
+      - sqlserver_dev_data:/var/opt/mssql
+
+volumes:
+  sqlserver_dev_data:
