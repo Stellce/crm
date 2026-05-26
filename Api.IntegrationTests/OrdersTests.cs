@@ -1,0 +1,53 @@
+using System.Net.Http.Json;
+using Application.DTOs;
+using FluentAssertions;
+using Infrastructure.Data;
+
+namespace Api.IntegrationTests;
+
+public class OrdersTests(SqlServerFixture sqlServer) 
+    : IntegrationTestBase(sqlServer), IClassFixture<SqlServerFixture>
+{
+    [Fact]
+    public async Task CreateOrder_WithExistingCustomer_ReturnsCreatedOrder()
+    {
+        var authRequest = new LoginRequest(
+            "superadmin@crm.local",
+            "SuperAdmin123!"
+        );
+
+        var authResponse = await Client.PostAsJsonAsync("/api/auth/login", authRequest);
+        var auth = await authResponse.Content.ReadFromJsonAsync<AuthResponse>();
+        
+        auth.Should().NotBeNull();
+        
+        var accessToken = auth.AccessToken;
+        Client.DefaultRequestHeaders.Authorization =
+            new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", accessToken);
+        
+        var customerRequest = new CreateCustomerRequest(
+            "Alex",
+            "alex@test.com"
+        );
+
+        var customerResponse = await Client.PostAsJsonAsync("/api/customers", customerRequest);
+
+        var customer = await customerResponse.Content.ReadFromJsonAsync<CustomerResponse>();
+        
+        customer.Should().NotBeNull();
+        customer.Id.Should().BePositive();
+
+        var orderRequest = new CreateOrderRequest(
+            customer.Id,
+            10.00m
+        );
+
+        var orderResponse = await Client.PostAsJsonAsync("/api/orders", orderRequest);
+        var order = await orderResponse.Content.ReadFromJsonAsync<OrderResponse>();
+        order.Should().NotBeNull();
+        order.Id.Should().BePositive();
+        order.CustomerId.Should().Be(customer.Id);
+        order.TotalAmount.Should().Be(10.00m);
+        order.CreatedAt.Should().BeCloseTo(DateTimeOffset.UtcNow, TimeSpan.FromSeconds(10));
+    }
+}

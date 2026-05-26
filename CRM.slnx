@@ -3,6 +3,7 @@
   <Folder Name="/Application/">
     <Project Path="Application/Application.csproj" />
   </Folder>
+  <Project Path="Api.IntegrationTests/Api.IntegrationTests.csproj" />
   <Project Path="Api/Api.csproj" />
   <Project Path="Domain/Domain.csproj" />
   <Project Path="Infrastructure/Infrastructure.csproj" />
