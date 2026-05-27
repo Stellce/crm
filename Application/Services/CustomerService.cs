@@ -3,11 +3,13 @@ using Application.Exceptions;
 using Domain.Entities;
 using Microsoft.EntityFrameworkCore;
 using Application.Abstractions;
+using Microsoft.Extensions.Logging;
 
 namespace Application.Services;
 
 public class CustomerService(
-    IAppDbContext context
+    IAppDbContext context,
+    ILogger<CustomerService> logger
 )
 {
     public async Task<PagedResponse<CustomerResponse>> GetAllCustomersAsync(CustomerQueryParameters queryParams)
@@ -134,6 +136,7 @@ public class CustomerService(
     {
         if (await context.Customers.AnyAsync(c => c.Email == request.Email))
         {
+            logger.LogWarning("Customer creation failed: email already exists");
             throw new AppException(ErrorCode.CustomerAlreadyExists);
         }
 
@@ -145,6 +148,8 @@ public class CustomerService(
 
         context.Customers.Add(customer);
         await context.SaveChangesAsync();
+
+        logger.LogInformation("Customer {CustomerId} created", customer.Id);
 
         return new CustomerResponse(
             customer.Id,

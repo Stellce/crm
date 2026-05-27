@@ -66,3 +66,15 @@ Use this account to log in and create the first admin/manager users. The seed va
   "TokenClockSkew": "00:00:30"
 }
 ```
+
+### Logging
+
+The project uses Serilog for structured logging.
+
+Implemented:
+- request logging middleware for HTTP requests;
+- centralized exception logging;
+- business-level logs for customer and order creation;
+- user id enrichment from JWT claims;
+- console and rolling file sinks;
+- environment-based configuration via appsettings.

@@ -3,11 +3,13 @@ using Domain.Entities;
 using Application.Exceptions;
 using Application.Abstractions;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 
 namespace Application.Services;
 
 public class OrderService(
-    IAppDbContext context
+    IAppDbContext context,
+    ILogger<OrderService> logger
 )
 {
     public async Task<PagedResponse<OrderResponse>> GetAllOrdersAsync(OrderQueryParameters queryParams)
@@ -114,6 +116,12 @@ public class OrderService(
 
         context.Orders.Add(order);
         await context.SaveChangesAsync();
+
+        logger.LogInformation(
+            "Order {OrderId} created for customer {CustomerId} with total amount {TotalAmount}", 
+            order.Id,
+            order.CustomerId,
+            order.TotalAmount);
 
         return new OrderResponse(
             order.Id,
