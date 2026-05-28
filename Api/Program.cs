@@ -11,6 +11,8 @@ using Infrastructure;
 using Api.Security;
 using Application.Security;
 using Api.Exceptions;
+using System.Threading.RateLimiting;
+using System.Globalization;
 
 Log.Logger = new LoggerConfiguration()
     .MinimumLevel.Override("Microsoft", LogEventLevel.Information)
@@ -76,6 +78,64 @@ try
     builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
 
     builder.Services.AddFluentValidationAutoValidation();
+
+    builder.Services.AddRateLimiter(options =>
+    {
+        options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
+
+        options.OnRejected = async (context, cancellationToken) =>
+        {
+            if (context.Lease.TryGetMetadata(MetadataName.RetryAfter, out var retryAfter))
+            {
+                context.HttpContext.Response.Headers.RetryAfter =
+                    ((int)retryAfter.TotalSeconds).ToString(NumberFormatInfo.InvariantInfo);
+            }
+
+            await context.HttpContext.Response.WriteAsJsonAsync(new ProblemDetails
+            {
+                Status = StatusCodes.Status429TooManyRequests,
+                Title = "Too many requests",
+                Detail = "Rate limiting exceeded. Try again later."
+            }, cancellationToken);
+        };
+
+        options.AddPolicy(RateLimitPolicies.Auth, httpContext =>
+        {
+            var ip = httpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown";
+
+            return RateLimitPartition.GetFixedWindowLimiter(
+                partitionKey: ip,
+                factory: _ => new FixedWindowRateLimiterOptions
+                {
+                    PermitLimit = 5,
+                    Window = TimeSpan.FromMinutes(5),
+                    QueueLimit = 0,
+                    AutoReplenishment = true
+                });
+        });
+
+        options.AddPolicy(RateLimitPolicies.UserApi, httpContext =>
+        {
+            var userId = httpContext.User.FindFirst("sub")?.Value;
+            var ip = httpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown";
+
+            var key = userId is null
+                ? $"user:{userId}"
+                : $"ip:{ip}";
+
+            return RateLimitPartition.GetSlidingWindowLimiter(
+                partitionKey: key,
+                factory: _ => new SlidingWindowRateLimiterOptions
+                {
+                    PermitLimit = 60,
+                    Window = TimeSpan.FromMinutes(1),
+                    SegmentsPerWindow = 6,
+                    QueueLimit = 0,
+                    QueueProcessingOrder = QueueProcessingOrder.OldestFirst,
+                    AutoReplenishment = true
+                });
+        });
+    });
 
     builder.Services.AddOpenApi(options =>
     {
@@ -165,9 +225,13 @@ try
 
     app.UseExceptionHandler();
 
-    app.UseHttpsRedirection();
+    if(app.Environment.IsEnvironment("Testing"))
+    {
+        app.UseHttpsRedirection();
+    }
 
     app.UseAuthentication();
+    app.UseRateLimiter();
     app.UseAuthorization();
 
     app.MapControllers();
@@ -177,6 +241,7 @@ try
 catch(Exception ex)
 {
     Log.Fatal(ex, "CRM API terminated unexpectedly");
+    throw;
 }
 finally
 {

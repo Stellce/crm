@@ -3,6 +3,7 @@ using System.Net.Http.Json;
 using Application.DTOs;
 using FluentAssertions;
 using Api.IntegrationTests.Helpers;
+using Microsoft.AspNetCore.Http;
 
 namespace Api.IntegrationTests;
 
@@ -87,5 +88,20 @@ public class CustomersTests(SqlServerFixture sqlServer)
         var response = await Client.PostAsJsonAsync("/api/customers", request);
 
         response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
+    }
+
+    [Fact]
+    public async Task GetCustomers_WhenRateLimitExceeded_ReturnsTooManyRequests()
+    {
+        await Api.AuthorizeAsSuperAdminAsync();
+
+        HttpResponseMessage response = null!;
+
+        for(var i = 0; i < 61; i++)
+        {
+            response = await Client.GetAsync("/api/customers");
+        }
+
+        response.StatusCode.Should().Be(HttpStatusCode.TooManyRequests);
     }
 }

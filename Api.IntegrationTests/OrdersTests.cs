@@ -1,3 +1,4 @@
+using System.Net;
 using System.Net.Http.Json;
 using Application.DTOs;
 using FluentAssertions;
@@ -49,5 +50,42 @@ public class OrdersTests(SqlServerFixture sqlServer)
         order.CustomerId.Should().Be(customer.Id);
         order.TotalAmount.Should().Be(10.00m);
         order.CreatedAt.Should().BeCloseTo(DateTimeOffset.UtcNow, TimeSpan.FromSeconds(10));
+    }
+
+    [Fact]
+    public async Task CreateOrder_WithExistingCustomer_ReturnsTooManyRequests()
+    {
+        await Api.AuthorizeAsSuperAdminAsync();
+
+        var customer = CreateCustomer();
+
+        var orderRequest = new CreateOrderRequest(
+            customer.Id,
+            10.00m
+        );
+
+        HttpResponseMessage response = null!;
+
+        for(var i = 0; i < 61; i++)
+        {
+            response = await Client.PostAsJsonAsync("/api/orders", orderRequest);
+        }
+
+        response.StatusCode.Should().Be(HttpStatusCode.TooManyRequests);
+    }
+
+    private async Task<CustomerResponse> CreateCustomer()
+    {
+        var customerRequest = new CreateCustomerRequest(
+            "Alex",
+            "alex@test.com"
+        );
+
+        var customerResponse = await Client.PostAsJsonAsync("/api/customers", customerRequest);
+
+        var customer = await customerResponse.Content.ReadFromJsonAsync<CustomerResponse>();
+
+        customer.Should().NotBeNull();
+        return customer;
     }
 }

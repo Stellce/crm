@@ -1,11 +1,14 @@
+using Api.Security;
 using Application.DTOs;
 using Application.Services;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 
 namespace Api.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
+[EnableRateLimiting(RateLimitPolicies.Auth)]
 public class AuthController(
     AuthService authService
 ) : ControllerBase

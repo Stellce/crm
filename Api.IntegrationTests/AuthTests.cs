@@ -2,26 +2,13 @@ using System.Net;
 using System.Net.Http.Json;
 using Application.DTOs;
 using FluentAssertions;
+using Microsoft.AspNetCore.Http;
 
 namespace Api.IntegrationTests;
 
-public class AuthTests(SqlServerFixture sqlServer) : IClassFixture<SqlServerFixture>, IAsyncLifetime
+public class AuthTests(SqlServerFixture sqlServer) 
+    : IntegrationTestBase(sqlServer), IClassFixture<SqlServerFixture>
 {
-    private readonly CrmApiFactory _factory = new(sqlServer.ConnectionString);
-    private HttpClient _client = null!;
-
-    public async Task InitializeAsync()
-    {
-        await _factory.ResetDatabaseAsync();
-        _client = _factory.CreateClient();
-    }
-
-    public Task DisposeAsync()
-    {
-        _client.Dispose();
-        _factory.Dispose();
-        return Task.CompletedTask;
-    }
 
     [Fact]
     public async Task Login_WithSeededSuperAdmin_ReturnsTokens()
@@ -31,7 +18,7 @@ public class AuthTests(SqlServerFixture sqlServer) : IClassFixture<SqlServerFixt
             "SuperAdmin123!"
         );
 
-        var response = await _client.PostAsJsonAsync("/api/auth/login", request);
+        var response = await Client.PostAsJsonAsync("/api/auth/login", request);
 
         response.StatusCode.Should().Be(HttpStatusCode.OK);
 
@@ -50,8 +37,26 @@ public class AuthTests(SqlServerFixture sqlServer) : IClassFixture<SqlServerFixt
             "wrongpassword"
         );
 
-        var response = await _client.PostAsJsonAsync("/api/auth/login", request);
+        var response = await Client.PostAsJsonAsync("/api/auth/login", request);
 
         response.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
+    }
+
+    [Fact]
+    public async Task Login_WhenRateLimitExceeded_ReturnsTooManyRequests()
+    {
+        var request = new LoginRequest(
+            "superadmin@crm.local",
+            "wrongpassword"
+        );
+
+        HttpResponseMessage response = null!;
+
+        for (var i = 0; i < 6; i++)
+        {
+            response = await Client.PostAsJsonAsync("/api/auth/login", request);
+        }
+
+        response.StatusCode.Should().Be(HttpStatusCode.TooManyRequests);
     }
 }

@@ -4,10 +4,12 @@ using Application.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Api.Security;
+using Microsoft.AspNetCore.RateLimiting;
 
 namespace Api.Controllers;
 
 [Authorize(Policy = AppPolicies.ManageUsers)]
+[EnableRateLimiting(RateLimitPolicies.UserApi)]
 [Route("api/[controller]")]
 [ApiController]
 public class UsersController(
