@@ -27,10 +27,13 @@ try
 
     var builder = WebApplication.CreateBuilder(args);
 
+    var preserveStaticLogger = builder.Environment.IsEnvironment("Testing");
+
     builder.Services.AddSerilog((services, loggerConfiguration) => loggerConfiguration
         .ReadFrom.Configuration(builder.Configuration)
         .ReadFrom.Services(services)
-        .Enrich.FromLogContext());
+        .Enrich.FromLogContext(),
+        preserveStaticLogger: preserveStaticLogger);
 
     builder.Services.AddControllers();
 
@@ -225,7 +228,7 @@ try
 
     app.UseExceptionHandler();
 
-    if(app.Environment.IsEnvironment("Testing"))
+    if(!app.Environment.IsEnvironment("Testing"))
     {
         app.UseHttpsRedirection();
     }
