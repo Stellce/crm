@@ -49,6 +49,11 @@ try
         .Validate(o => o.TokenClockSkew >= TimeSpan.Zero, "TokenClockSkew must be non-negative")
         .ValidateOnStart();
 
+    builder.Services.AddOptions<PasswordResetOptions>()
+        .Bind(builder.Configuration.GetSection("PasswordReset"))
+        .Validate(o => !string.IsNullOrWhiteSpace(o.FrontendBaseUrl), "PasswordReset.FrontendBaseUrl must not be empty")
+        .Validate(o => o.TokenLifetime > TimeSpan.Zero, "PasswordReset.TokenLifetime must be greater than zero")
+        .ValidateOnStart();
 
     builder.Services.AddAppAuthorization();
 
@@ -122,7 +127,7 @@ try
             var userId = httpContext.User.FindFirst("sub")?.Value;
             var ip = httpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown";
 
-            var key = userId is null
+            var key = userId is not null
                 ? $"user:{userId}"
                 : $"ip:{ip}";
 
@@ -241,7 +246,7 @@ try
 
     app.Run();
 }
-catch(Exception ex)
+catch(Exception ex) when (ex.GetType().Name != "HostAbortedException")
 {
     Log.Fatal(ex, "CRM API terminated unexpectedly");
     throw;

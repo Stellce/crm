@@ -19,6 +19,7 @@ public static class ErrorCodeExtensions
 
             ErrorCode.InvalidCredentials => StatusCodes.Status401Unauthorized,
             ErrorCode.InvalidAccessToken => StatusCodes.Status401Unauthorized,
+            ErrorCode.InvalidResetToken => StatusCodes.Status400BadRequest,
             ErrorCode.Forbidden => StatusCodes.Status403Forbidden,
 
             _ => StatusCodes.Status500InternalServerError

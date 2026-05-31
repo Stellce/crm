@@ -41,6 +41,11 @@ public static class ErrorCodeExtensions
                 "Invalid access token"
             ),
 
+            ErrorCode.InvalidResetToken => new ErrorInfo(
+                "INVALID_RESET_TOKEN",
+                "Invalid reset token"
+            ),
+
             ErrorCode.Forbidden => new ErrorInfo(
                 "FORBIDDEN",
                 "User does not have permission to perform this action"

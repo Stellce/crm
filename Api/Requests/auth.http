@@ -6,7 +6,7 @@ Content-Type: application/json
 
 {
     "Email": "manager1@test.com",
-    "Password": "12345678"
+    "Password": "123456789"
 }
 
 ### Login Admin
@@ -24,4 +24,21 @@ Content-Type: application/json
 
 {
     "refresh_token": "0fCyIuSwTid4Y+At7cqZwD2L+61TzcHfOoFcJTqIVFM6LOk/IWAoQ+JF1jdncaFpgFEu7cAhAGArW+bXJPR7vQ=="
+}
+
+### Request password reset
+POST {{CRM_HostAddress}}/api/auth/forgot-password
+Content-Type: application/json
+
+{
+    "Email": "manager1@test.com"
+}
+
+### Reset password
+POST {{CRM_HostAddress}}/api/auth/reset-password
+Content-Type: application/json
+
+{
+    "Token": "xhNJwe_CnkFSxIafF8Gfez9S8CJsAgOh1j6Sw6niumlj-8lykCiSyFZgV8lIeO72JctG681e_86Z3BvVflH8nw",
+    "NewPassword": "123456789"
 }

@@ -13,7 +13,9 @@ public class AuthService(
     IAppDbContext context,
     IPasswordHasher<User> hasher,
     IJwtService jwtService,
-    IOptions<AuthOptions> authOptions
+    IOptions<AuthOptions> authOptions,
+    IEmailSender emailSender,
+    IOptions<PasswordResetOptions> passwordResetOptions
 )
 {
     public async Task<AuthResponse> LoginUser(LoginRequest request)
@@ -26,8 +28,8 @@ public class AuthService(
             throw new AppException(ErrorCode.InvalidCredentials);
         }
 
-        var refreshToken = jwtService.GenerateRefreshToken();
-        var refreshTokenHash = jwtService.HashRefreshToken(refreshToken);
+        var refreshToken = TokenGenerator.GenerateBase64Token();
+        var refreshTokenHash = TokenGenerator.Sha256Hash(refreshToken);
         context.RefreshTokens.Add(new RefreshToken
         {
             TokenHash = refreshTokenHash,
@@ -43,7 +45,7 @@ public class AuthService(
 
     public async Task<AuthResponse> RefreshToken(string refreshToken)
     {
-        var tokenHash = jwtService.HashRefreshToken(refreshToken);
+        var tokenHash = TokenGenerator.Sha256Hash(refreshToken);
 
         var storedToken = await context.RefreshTokens
             .Include(rt => rt.User)
@@ -55,8 +57,8 @@ public class AuthService(
         }
 
         var newAccessToken = jwtService.GenerateToken(storedToken.User);
-        var newRefreshToken = jwtService.GenerateRefreshToken();
-        var newRefreshTokenHash = jwtService.HashRefreshToken(newRefreshToken);
+        var newRefreshToken = TokenGenerator.GenerateBase64Token();
+        var newRefreshTokenHash = TokenGenerator.Sha256Hash(newRefreshToken);
 
         storedToken.RevokedAt = DateTimeOffset.UtcNow;
         storedToken.ReplacedByTokenHash = newRefreshTokenHash;
@@ -76,7 +78,7 @@ public class AuthService(
 
     public async Task LogoutUser(string refreshToken)
     {
-        var tokenHash = jwtService.HashRefreshToken(refreshToken);
+        var tokenHash = TokenGenerator.Sha256Hash(refreshToken);
 
         var storedToken = await context.RefreshTokens
             .SingleOrDefaultAsync(rt => rt.TokenHash == tokenHash);
@@ -86,5 +88,64 @@ public class AuthService(
 
         storedToken.RevokedAt = DateTimeOffset.UtcNow;
         await context.SaveChangesAsync();
+    }
+
+    public async Task RequestPasswordReset(
+        ForgotPasswordRequest request,
+        CancellationToken cancellationToken)
+    {
+        var user = await context.Users
+            .SingleOrDefaultAsync(u => u.Email == request.Email, cancellationToken);
+        
+        if (user is null)
+        {
+            return;
+        }
+
+        var rawToken = TokenGenerator.GenerateUrlSafeToken();
+        var tokenHash = TokenGenerator.Sha256Hash(rawToken);
+
+        context.PasswordResetTokens.Add(new PasswordResetToken
+        {
+            UserId = user.Id,
+            TokenHash = tokenHash,
+            CreatedAt = DateTimeOffset.UtcNow,
+            ExpiresAt = DateTimeOffset.UtcNow.Add(passwordResetOptions.Value.TokenLifetime)
+        });
+
+        await context.SaveChangesAsync(cancellationToken);
+
+        var resetLink = $"{passwordResetOptions.Value.FrontendBaseUrl}/reset-password?resetToken={Uri.EscapeDataString(rawToken)}";
+
+        await emailSender.SendAsync(
+            user.Email,
+            "Password reset",
+            $"Reset your password: {resetLink}",
+            cancellationToken);
+    }
+
+    public async Task ResetPassword(
+        ResetPasswordRequest request,
+        CancellationToken cancellationToken)
+    {
+        var tokenHash = TokenGenerator.Sha256Hash(request.Token);
+        var passwordResetToken = await context.PasswordResetTokens
+            .Include(token => token.User)
+            .SingleOrDefaultAsync(token => token.TokenHash == tokenHash, cancellationToken);
+        
+        if (
+            passwordResetToken is null ||
+            passwordResetToken.UsedAt is not null || 
+            passwordResetToken.ExpiresAt < DateTimeOffset.UtcNow)
+        {
+            throw new AppException(ErrorCode.InvalidResetToken);
+        }
+
+
+        passwordResetToken.User.PasswordHash = hasher.HashPassword(passwordResetToken.User, request.NewPassword);
+
+        passwordResetToken.UsedAt = DateTimeOffset.UtcNow;
+
+        await context.SaveChangesAsync(cancellationToken);
     }
 }

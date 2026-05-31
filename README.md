@@ -1,16 +1,19 @@
 # CRM API
 
 ## Stack
+
 - ASP.NET Core Web API
 - EF Core
 - SQL Server
 - JWT Authentication
 
 ## Features
+
 - User registration/login
 - Role-based authorization
 - Orders management
 - Global exception handling
+- Password reset request tokens
 
 ## Setup
 
@@ -18,60 +21,72 @@
 
 2. Set JWT key:
 
-```json
-"Jwt": {
-  "Key": "replace with your own secure key",
-  "Issuer": "crm-api",
-  "Audience": "crm-client"
-}
-```
+    ```json
+    "Jwt": {
+      "Key": "replace with your own secure key",
+      "Issuer": "crm-api",
+      "Audience": "crm-client"
+    }
+    ```
 
 3. Install dependencies
-```
-dotnet restore
-```
+
+    ```teminal
+    dotnet restore
+    ```
 
 4. Run migrations:
-```
-dotnet ef database update
-```
+
+    ```terminal
+    dotnet ef database update
+    ```
 
 5. Start project
 
-```
-dotnet run
-```
+    ```terminal
+    dotnet run
+    ```
 
 6. Development seed
 
-When the API runs in `Development`, it creates a bootstrap SuperAdmin user if it does not already exist:
+    When the API runs in `Development`, it creates a bootstrap SuperAdmin user if it does not already exist:
 
-```json
-{
-  "Email": "superadmin@crm.local",
-  "Password": "SuperAdmin123!"
-}
-```
+    ```json
+    {
+      "Email": "superadmin@crm.local",
+      "Password": "SuperAdmin123!"
+    }
+    ```
 
-Use this account to log in and create the first admin/manager users. The seed values can be changed in `appsettings.Development.json` under `Seed:SuperAdmin`.
+    Use this account to log in and create the first admin/manager users. The seed values can be changed in `appsettings.Development.json` under `Seed:SuperAdmin`.
 
 ## Options
 
 1. Configure Token Lifetime
 
-```json
-"Auth": {
-  "AccessTokenLifetime": "00:10:00",
-  "RefreshTokenLifetime": "00:30:00",
-  "TokenClockSkew": "00:00:30"
-}
-```
+    ```json
+    "Auth": {
+      "AccessTokenLifetime": "00:10:00",
+      "RefreshTokenLifetime": "00:30:00",
+      "TokenClockSkew": "00:00:30"
+    }
+    ```
+
+2. Configure password reset
+
+    ```json
+    "PasswordReset": {
+      "FrontendBaseUrl": "http://localhost:5173",
+      "TokenLifetime": "00:30:00"
+    }
+    ```
 
 ### Logging
 
 The project uses Serilog for structured logging.
 
 Implemented:
+
 - request logging middleware for HTTP requests;
 - centralized exception logging;
 - business-level logs for customer and order creation;

@@ -13,5 +13,12 @@ services:
     volumes:
       - sqlserver_dev_data:/var/opt/mssql
 
+  mailpit:
+    image: axllent/mailpit:v1.30
+    container_name: crm-mailpit-dev
+    ports:
+      - "1025:1025"
+      - "8025:8025"
+
 volumes:
   sqlserver_dev_data:

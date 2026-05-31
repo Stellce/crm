@@ -12,6 +12,7 @@ public enum ErrorCode
 
     InvalidCredentials,
     InvalidAccessToken,
+    InvalidResetToken,
 
     Forbidden,
 

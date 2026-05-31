@@ -7,6 +7,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Infrastructure.Data;
+using Infrastructure.Email;
 
 namespace Infrastructure;
 
@@ -34,11 +35,25 @@ public static class DependencyInjection
                 });
         });
 
+        services.AddOptions<SmtpEmailOptions>()
+            .Bind(configuration.GetSection("Email:Smtp"))
+            .Validate(o => !o.Enabled || !string.IsNullOrWhiteSpace(o.Host), 
+                "Email:Smtp:Host must not be empty when SMTP is enabled")
+            .Validate(o => !o.Enabled || o.Port > 0, 
+                "Email:Smtp:Port must be greater than 0 when SMTP is enabled")
+            .Validate(o => !o.Enabled || !string.IsNullOrWhiteSpace(o.From), 
+                "Email:Smtp:From must not be empty when SMTP is enabled")
+            .Validate(o => 
+                string.IsNullOrWhiteSpace(o.User) == string.IsNullOrWhiteSpace(o.Password),
+                "Email:Smtp:User and Email:Smtp:Password must be both set or both empty")
+            .ValidateOnStart();
+
         services.AddScoped<IAppDbContext>(sp => 
             sp.GetRequiredService<AppDbContext>());
 
         services.AddScoped<IJwtService, JwtService>();
         services.AddScoped<IPasswordHasher<User>, PasswordHasher<User>>();
+        services.AddScoped<IEmailSender, SmtpEmailSender>();
 
         return services;
     }

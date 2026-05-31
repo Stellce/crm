@@ -34,4 +34,22 @@ public class AuthController(
         await authService.LogoutUser(request.RefreshToken);
         return NoContent();
     }
+
+    [HttpPost("forgot-password")]
+    public async Task<ActionResult> ForgotPassword(
+        [FromBody] ForgotPasswordRequest request,
+        CancellationToken cancellationToken)
+    {
+        await authService.RequestPasswordReset(request, cancellationToken);
+        return NoContent();
+    }
+
+    [HttpPost("reset-password")]
+    public async Task<ActionResult> ResetPassword(
+        [FromBody] ResetPasswordRequest request,
+        CancellationToken cancellationToken)
+    {
+        await authService.ResetPassword(request, cancellationToken);
+        return NoContent();
+    }
 }
