@@ -8,6 +8,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Infrastructure.Data;
 using Infrastructure.Email;
+using Infrastructure.BackgroundJobs;
 
 namespace Infrastructure;
 
@@ -54,6 +55,7 @@ public static class DependencyInjection
         services.AddScoped<IJwtService, JwtService>();
         services.AddScoped<IPasswordHasher<User>, PasswordHasher<User>>();
         services.AddScoped<IEmailSender, SmtpEmailSender>();
+        services.AddScoped<AuthTokenCleanupJob>();
 
         return services;
     }

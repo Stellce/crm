@@ -49,6 +49,18 @@ public sealed class CrmApiFactory
             "00:00:30");
 
         Environment.SetEnvironmentVariable(
+            "PasswordReset__FrontendBaseUrl",
+            "https://localhost:5173");
+
+        Environment.SetEnvironmentVariable(
+            "PasswordReset__TokenLifetime",
+            "00:30:00");
+
+        Environment.SetEnvironmentVariable(
+            "Email__Smtp__Enabled",
+            "false");
+
+        Environment.SetEnvironmentVariable(
             "Seed__SuperAdmin__Email",
             "superadmin@crm.local");
 

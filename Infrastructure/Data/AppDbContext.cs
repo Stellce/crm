@@ -51,5 +51,14 @@ public class AppDbContext(DbContextOptions<AppDbContext> options)
         modelBuilder.Entity<PasswordResetToken>()
             .HasIndex(prt => prt.TokenHash)
             .IsUnique();
+
+        modelBuilder.Entity<RefreshToken>()
+            .HasIndex(rt => rt.ExpiresAt);
+
+        modelBuilder.Entity<PasswordResetToken>()
+            .HasIndex(prt => prt.ExpiresAt);
+
+        modelBuilder.Entity<PasswordResetToken>()
+            .HasIndex(prt => prt.UsedAt);
     }
 }

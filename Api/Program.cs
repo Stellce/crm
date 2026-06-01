@@ -13,6 +13,8 @@ using Application.Security;
 using Api.Exceptions;
 using System.Threading.RateLimiting;
 using System.Globalization;
+using Hangfire;
+using Infrastructure.BackgroundJobs;
 
 Log.Logger = new LoggerConfiguration()
     .MinimumLevel.Override("Microsoft", LogEventLevel.Information)
@@ -26,8 +28,9 @@ try
 
 
     var builder = WebApplication.CreateBuilder(args);
+    var isTesting = builder.Environment.IsEnvironment("Testing");
 
-    var preserveStaticLogger = builder.Environment.IsEnvironment("Testing");
+    var preserveStaticLogger = isTesting;
 
     builder.Services.AddSerilog((services, loggerConfiguration) => loggerConfiguration
         .ReadFrom.Configuration(builder.Configuration)
@@ -41,6 +44,15 @@ try
     builder.Services.AddInfrastructure(builder.Configuration);
     builder.Services.AddJwtAuthentication(builder.Configuration);
 
+    if (!isTesting)
+    {
+        builder.Services.AddHangfire(configuration =>
+        {
+            configuration.UseSqlServerStorage(
+                builder.Configuration.GetConnectionString("DefaultConnection"));
+        });
+        builder.Services.AddHangfireServer();
+    }
 
     builder.Services.AddOptions<AuthOptions>()
         .Bind(builder.Configuration.GetSection("Auth"))
@@ -205,6 +217,22 @@ try
             options.SwaggerEndpoint("/openapi/v1.json", "CRM API v1");
             options.RoutePrefix = "swagger";
         });
+
+        app.UseHangfireDashboard("/hangfire");
+    }
+
+    if (!app.Environment.IsEnvironment("Testing"))
+    {
+        var recurringJobManager = app.Services.GetRequiredService<IRecurringJobManager>();
+
+        recurringJobManager.AddOrUpdate<AuthTokenCleanupJob>(
+            "auth-token-cleanup",
+            job => job.RunAsync(),
+            Cron.Daily(3),
+            new RecurringJobOptions
+            {
+                TimeZone = TimeZoneInfo.Utc
+            });
     }
 
     app.UseSerilogRequestLogging(options =>

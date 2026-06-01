@@ -1,0 +1,13 @@
+@CRM_HostAddress = https://localhost:7273
+
+### Hangfire
+GET {{CRM_HostAddress}}/hangfire
+
+### Swagger
+GET {{CRM_HostAddress}}/swagger
+
+### OpenAPI JSON
+GET {{CRM_HostAddress}}/openapi/v1.json
+
+### Dev mailbox
+GET http://localhost:8025

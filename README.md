@@ -93,3 +93,25 @@ Implemented:
 - user id enrichment from JWT claims;
 - console and rolling file sinks;
 - environment-based configuration via appsettings.
+
+## Local development
+
+After starting the API, the service is available locally at:
+
+- API: `https://localhost:7273`
+- Swagger UI: `https://localhost:7273/swagger`
+- OpenAPI JSON: `https://localhost:7273/openapi/v1.json`
+- Hangfire Dashboard: `https://localhost:7273/hangfire`
+- Dev mailbox: `http://localhost:8025`
+
+> Exact ports may differ depending on `Api/Properties/launchSettings.json`.
+
+### Background jobs
+
+The application uses Hangfire for recurring background processing.
+
+Currently configured jobs:
+
+- `auth-token-cleanup` — removes expired refresh tokens and old password reset tokens.
+
+Hangfire Dashboard is enabled only in the Development environment.
