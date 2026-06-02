@@ -6,8 +6,12 @@ using Microsoft.AspNetCore.Http;
 
 namespace Api.IntegrationTests;
 
-public class AuthTests(SqlServerFixture sqlServer) 
-    : IntegrationTestBase(sqlServer), IClassFixture<SqlServerFixture>
+public class AuthTests(
+    SqlServerFixture sqlServer,
+    RedisFixture redis) 
+    : IntegrationTestBase(sqlServer, redis), 
+        IClassFixture<SqlServerFixture>,
+        IClassFixture<RedisFixture>
 {
 
     [Fact]

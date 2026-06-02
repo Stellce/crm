@@ -56,10 +56,13 @@ services:
         condition: service_healthy
       migrate:
         condition: service_completed_successfully
+      redis:
+        condition: service_started
     environment:
       ASPNETCORE_ENVIRONMENT: Development
       ASPNETCORE_URLS: http://+:8080
       ConnectionStrings__DefaultConnection: "Server=db,1433;Database=${SQLSERVER_DB:-CrmDb};User Id=sa;Password=${MSSQL_SA_PASSWORD};Encrypt=True;TrustServerCertificate=True;"
+      ConnectionStrings__Redis: "redis:6379"
       Jwt__Key: ${JWT_KEY:-dev-super-secret-key-change-me-please-32-chars}
       Jwt__Issuer: ${JWT_ISSUER:-crm-api}
       Jwt__Audience: ${JWT_AUDIENCE:-crm-client}
@@ -70,6 +73,12 @@ services:
       Seed__SuperAdmin__Password: ${SEED_SUPERADMIN_PASSWORD:-SuperAdmin123!}
     ports:
       - "5144:8080"
+
+  redis:
+    image: redis:8.8.0-alpine
+    container_name: crm-redis
+    ports:
+      - "6379:6379"
 
 volumes:
   sqlserver_data:

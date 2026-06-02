@@ -2,13 +2,16 @@ using System.Net;
 using System.Net.Http.Json;
 using Application.DTOs;
 using FluentAssertions;
-using Api.IntegrationTests.Helpers;
 using Microsoft.AspNetCore.Http;
 
 namespace Api.IntegrationTests;
 
-public class CustomersTests(SqlServerFixture sqlServer) 
-    : IntegrationTestBase(sqlServer), IClassFixture<SqlServerFixture>
+public class CustomersTests(
+    SqlServerFixture sqlServer,
+    RedisFixture redis) 
+    : IntegrationTestBase(sqlServer, redis), 
+        IClassFixture<SqlServerFixture>,
+        IClassFixture<RedisFixture>
 {    
     [Fact]
     public async Task GetCustomers_WithoutToken_ReturnsUnauthorized()
@@ -103,5 +106,42 @@ public class CustomersTests(SqlServerFixture sqlServer)
         }
 
         response.StatusCode.Should().Be(HttpStatusCode.TooManyRequests);
+    }
+
+    
+    [Fact]
+    public async Task GetCustomer_AfterChange_ReturnsChangedCustomer()
+    {
+        await Api.AuthorizeAsSuperAdminAsync();
+
+        var customer = await Api.CreateCustomerAsync();
+
+        var firstGetResponse = await Client.GetAsync($"/api/customers/{customer.Id}");
+        var firstGetBody = await firstGetResponse.Content.ReadAsStringAsync();
+
+        firstGetResponse.StatusCode.Should().Be(HttpStatusCode.OK, firstGetBody);
+
+        var cachedCustomer = await firstGetResponse.Content.ReadFromJsonAsync<CustomerResponse>();
+
+        cachedCustomer.Should().NotBeNull();
+        cachedCustomer.Email.Should().Be(customer.Email);
+        
+        var newEmail = "changed-email@test.com";
+
+        var request = new PatchCustomerRequest(customer.Name, newEmail);
+
+        var patchResponse = await Client.PatchAsJsonAsync($"/api/customers/{customer.Id}", request);
+        
+        patchResponse.StatusCode.Should().Be(HttpStatusCode.NoContent);
+
+        var secondGetResponse = await Client.GetAsync($"/api/customers/{customer.Id}");
+        var secondGetBody = await secondGetResponse.Content.ReadAsStringAsync();
+
+        secondGetResponse.StatusCode.Should().Be(HttpStatusCode.OK, secondGetBody);
+
+        var changedCustomer = await secondGetResponse.Content.ReadFromJsonAsync<CustomerResponse>();
+
+        changedCustomer.Should().NotBeNull();
+        changedCustomer.Email.Should().Be(newEmail);
     }
 }

@@ -115,3 +115,25 @@ Currently configured jobs:
 - `auth-token-cleanup` — removes expired refresh tokens and old password reset tokens.
 
 Hangfire Dashboard is enabled only in the Development environment.
+
+
+## Redis caching
+
+Implemented cache-aside Redis caching for frequently accessed read endpoints.
+
+Cached:
+
+- GET /api/customers/{id}
+- GET /api/orders/{id}
+
+Invalidated on:
+
+- PUT /api/customers/{id}
+- PATCH /api/customers/{id}
+- DELETE /api/customers/{id}
+
+Tech:
+
+- Microsoft.Extensions.Caching.StackExchangeRedis
+- IDistributedCache
+- Docker Compose Redis service

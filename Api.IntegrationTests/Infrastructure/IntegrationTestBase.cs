@@ -2,9 +2,13 @@ using Api.IntegrationTests.Helpers;
 
 namespace Api.IntegrationTests;
 
-public abstract class IntegrationTestBase(SqlServerFixture sqlServer) : IAsyncLifetime
+public abstract class IntegrationTestBase(
+    SqlServerFixture sqlServer,
+    RedisFixture redis) : IAsyncLifetime
 {
-    private readonly CrmApiFactory _factory = new(sqlServer.ConnectionString);
+    private readonly CrmApiFactory _factory = new(
+        sqlServer.ConnectionString,
+        redis.ConnectionString);
 
     protected HttpClient Client { get; private set; } = null!;
     protected CrmTestClient Api { get; private set; } = null!;

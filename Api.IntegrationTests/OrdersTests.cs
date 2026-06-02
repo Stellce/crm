@@ -2,12 +2,15 @@ using System.Net;
 using System.Net.Http.Json;
 using Application.DTOs;
 using FluentAssertions;
-using Infrastructure.Data;
 
 namespace Api.IntegrationTests;
 
-public class OrdersTests(SqlServerFixture sqlServer) 
-    : IntegrationTestBase(sqlServer), IClassFixture<SqlServerFixture>
+public class OrdersTests(
+    SqlServerFixture sqlServer,
+    RedisFixture redis) 
+    : IntegrationTestBase(sqlServer, redis), 
+        IClassFixture<SqlServerFixture>,
+        IClassFixture<RedisFixture>
 {
     [Fact]
     public async Task CreateOrder_WithExistingCustomer_ReturnsCreatedOrder()

@@ -4,12 +4,14 @@ using Domain.Entities;
 using Microsoft.EntityFrameworkCore;
 using Application.Abstractions;
 using Microsoft.Extensions.Logging;
+using Application.Caching;
 
 namespace Application.Services;
 
 public class CustomerService(
     IAppDbContext context,
-    ILogger<CustomerService> logger
+    ILogger<CustomerService> logger,
+    IAppCache cache
 )
 {
     public async Task<PagedResponse<CustomerResponse>> GetAllCustomersAsync(CustomerQueryParameters queryParams)
@@ -62,9 +64,18 @@ public class CustomerService(
         );
     }
 
-    public async Task<CustomerResponse> GetCustomerByIdAsync(int id)
+    public async Task<CustomerResponse> GetCustomerByIdAsync(int id, CancellationToken cancellationToken)
     {
-        return await context.Customers
+        var key = CacheKeys.CustomerById(id);
+
+        var cachedCustomer = await cache.GetAsync<CustomerResponse>(key, cancellationToken);
+
+        if (cachedCustomer is not null)
+        {
+            return cachedCustomer;
+        }
+
+        var customer = await context.Customers
             .AsNoTracking()
             .Where(customer => customer.Id == id)
             .Select(customer => new CustomerResponse(
@@ -72,7 +83,16 @@ public class CustomerService(
                 customer.Name,
                 customer.Email
             ))
-            .FirstOrDefaultAsync() ?? throw new AppException(ErrorCode.CustomerNotFound);
+            .FirstOrDefaultAsync(cancellationToken) 
+            ?? throw new AppException(ErrorCode.CustomerNotFound);
+        
+        await cache.SetAsync(
+            key, 
+            customer, 
+            TimeSpan.FromMinutes(10), 
+            cancellationToken);
+
+        return customer;
     }
 
     public async Task<PagedResponse<OrderResponse>> GetCustomerOrders(CustomerOrdersQueryParameters queryParams, int customerId)
@@ -165,6 +185,8 @@ public class CustomerService(
         customer.Email = request.Email;
 
         await context.SaveChangesAsync();
+
+        await cache.RemoveAsync(CacheKeys.CustomerById(id));
     }
 
     public async Task PatchCustomer(PatchCustomerRequest request, int id)
@@ -175,6 +197,8 @@ public class CustomerService(
         customer.Email = request.Email ?? customer.Email;
 
         await context.SaveChangesAsync();
+        
+        await cache.RemoveAsync(CacheKeys.CustomerById(id));
     }
 
     public async Task DeleteCustomer(int id)
@@ -183,5 +207,7 @@ public class CustomerService(
         context.Customers.Remove(customer);
 
         await context.SaveChangesAsync();
+        
+        await cache.RemoveAsync(CacheKeys.CustomerById(id));
     }
 }

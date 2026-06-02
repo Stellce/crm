@@ -7,67 +7,12 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace Api.IntegrationTests;
 
-public sealed class CrmApiFactory
-    : WebApplicationFactory<Program>
+public sealed class CrmApiFactory(string connectionString, string redisConnectionString)
+        : WebApplicationFactory<Program>
 {
-    private readonly string _connectionString;
-
-    public CrmApiFactory(string connectionString)
-    {
-        _connectionString = connectionString;
-
-        Environment.SetEnvironmentVariable(
-            "ASPNETCORE_ENVIRONMENT",
-            "Testing");
-
-        Environment.SetEnvironmentVariable(
-            "ConnectionStrings__DefaultConnection",
-            connectionString);
-
-        Environment.SetEnvironmentVariable(
-            "Jwt__Key",
-            "integration-tests-secret-key-at-least-32-chars");
-
-        Environment.SetEnvironmentVariable(
-            "Jwt__Issuer",
-            "crm-api");
-
-        Environment.SetEnvironmentVariable(
-            "Jwt__Audience",
-            "crm-client");
-
-        Environment.SetEnvironmentVariable(
-            "Auth__AccessTokenLifetime",
-            "00:10:00");
-
-        Environment.SetEnvironmentVariable(
-            "Auth__RefreshTokenLifetime",
-            "00:30:00");
-
-        Environment.SetEnvironmentVariable(
-            "Auth__TokenClockSkew",
-            "00:00:30");
-
-        Environment.SetEnvironmentVariable(
-            "PasswordReset__FrontendBaseUrl",
-            "https://localhost:5173");
-
-        Environment.SetEnvironmentVariable(
-            "PasswordReset__TokenLifetime",
-            "00:30:00");
-
-        Environment.SetEnvironmentVariable(
-            "Email__Smtp__Enabled",
-            "false");
-
-        Environment.SetEnvironmentVariable(
-            "Seed__SuperAdmin__Email",
-            "superadmin@crm.local");
-
-        Environment.SetEnvironmentVariable(
-            "Seed__SuperAdmin__Password",
-            "SuperAdmin123!");
-    }
+    private readonly string _connectionString = connectionString;
+    private readonly string _redisConnectionString = redisConnectionString;
+    private readonly string _cacheInstanceName = $"crm-tests:{Guid.NewGuid():N}:";
 
     public async Task ResetDatabaseAsync()
     {
@@ -76,5 +21,31 @@ public sealed class CrmApiFactory
 
         await db.Database.EnsureDeletedAsync();
         await db.Database.MigrateAsync();
+    }
+
+    protected override void ConfigureWebHost(IWebHostBuilder builder)
+    {
+        builder.UseEnvironment("Testing");
+
+        builder.ConfigureAppConfiguration((context, config) =>
+        {
+            config.AddInMemoryCollection(new Dictionary<string, string?>
+            {
+                ["ConnectionStrings:DefaultConnection"] = _connectionString,
+                ["ConnectionStrings:Redis"] = _redisConnectionString,
+                ["Cache:InstanceName"] = _cacheInstanceName,
+                ["Jwt:Key"] = "integration-tests-secret-key-at-least-32-chars",
+                ["Jwt:Issuer"] = "crm-api",
+                ["Jwt:Audience"] = "crm-client",
+                ["Auth:AccessTokenLifetime"] = "00:10:00",
+                ["Auth:RefreshTokenLifetime"] = "00:30:00",
+                ["Auth:TokenClockSkew"] = "00:00:30",
+                ["PasswordReset:TokenLifetime"] = "00:30:00",
+                ["Email:smtp:Enabled"] = "false",
+                ["PasswordReset:FrontendBaseUrl"] = "https://localhost:5173",
+                ["Seed:SuperAdmin:Email"] = "superadmin@crm.local",
+                ["Seed:SuperAdmin:Password"] = "SuperAdmin123!",
+            });
+        });
     }
 }

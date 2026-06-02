@@ -41,7 +41,7 @@ try
     builder.Services.AddControllers();
 
     builder.Services.AddApplication();
-    builder.Services.AddInfrastructure(builder.Configuration);
+    builder.Services.AddInfrastructure(builder.Configuration, builder.Environment);
     builder.Services.AddJwtAuthentication(builder.Configuration);
 
     if (!isTesting)

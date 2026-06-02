@@ -4,12 +4,14 @@ using Application.Exceptions;
 using Application.Abstractions;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
+using Application.Caching;
 
 namespace Application.Services;
 
 public class OrderService(
     IAppDbContext context,
-    ILogger<OrderService> logger
+    ILogger<OrderService> logger,
+    IAppCache cache
 )
 {
     public async Task<PagedResponse<OrderResponse>> GetAllOrdersAsync(OrderQueryParameters queryParams)
@@ -87,9 +89,18 @@ public class OrderService(
         );
     }
 
-    public async Task<OrderResponse> GetOrderById(int id)
+    public async Task<OrderResponse> GetOrderById(int id, CancellationToken cancellationToken)
     {
-        return await context.Orders
+        var key = CacheKeys.OrderById(id);
+
+        var cachedOrder = await cache.GetAsync<OrderResponse>(key, cancellationToken);
+
+        if (cachedOrder is not null)
+        {
+            return cachedOrder;
+        }
+
+        var order = await context.Orders
             .Where(order => order.Id == id)
             .Select(order => new OrderResponse(
                 order.Id,
@@ -97,7 +108,16 @@ public class OrderService(
                 order.TotalAmount,
                 order.CreatedAt
             ))
-            .SingleOrDefaultAsync() ?? throw new AppException(ErrorCode.OrderNotFound);
+            .SingleOrDefaultAsync(cancellationToken)
+            ?? throw new AppException(ErrorCode.OrderNotFound);
+        
+        await cache.SetAsync(
+            key,
+            order,
+            TimeSpan.FromMinutes(10),
+            cancellationToken);
+
+        return order;
     }
 
     public async Task<OrderResponse> CreateOrder(CreateOrderRequest orderRequest)

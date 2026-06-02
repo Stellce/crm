@@ -9,6 +9,8 @@ using Microsoft.Extensions.DependencyInjection;
 using Infrastructure.Data;
 using Infrastructure.Email;
 using Infrastructure.BackgroundJobs;
+using Infrastructure.Caching;
+using Microsoft.Extensions.Hosting;
 
 namespace Infrastructure;
 
@@ -16,7 +18,8 @@ public static class DependencyInjection
 {
     public static IServiceCollection AddInfrastructure(
         this IServiceCollection services,
-        IConfiguration configuration)
+        IConfiguration configuration,
+        IHostEnvironment environment)
     {
         var connectionString = configuration.GetConnectionString("DefaultConnection")
             ?? throw new InvalidOperationException("Connection string not found");
@@ -35,6 +38,26 @@ public static class DependencyInjection
                     await DatabaseSeeder.SeedAsync((AppDbContext) context, configuration, cancellationToken);
                 });
         });
+
+        var redisConnectionString = configuration.GetConnectionString("Redis");
+
+        if(!string.IsNullOrWhiteSpace(redisConnectionString))
+        {
+            services.AddStackExchangeRedisCache(options =>
+            {
+                options.Configuration = redisConnectionString;
+                options.InstanceName = configuration["Cache:InstanceName"] ?? "crm:";
+            });
+        }
+        else if (environment.IsDevelopment())
+        {
+            services.AddDistributedMemoryCache();
+        }
+        else
+        {
+            throw new InvalidOperationException(
+                "Redis connection string is required outside Development environment.");
+        }
 
         services.AddOptions<SmtpEmailOptions>()
             .Bind(configuration.GetSection("Email:Smtp"))
@@ -56,6 +79,7 @@ public static class DependencyInjection
         services.AddScoped<IPasswordHasher<User>, PasswordHasher<User>>();
         services.AddScoped<IEmailSender, SmtpEmailSender>();
         services.AddScoped<AuthTokenCleanupJob>();
+        services.AddScoped<IAppCache, DistributedAppCache>();
 
         return services;
     }

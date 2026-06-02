@@ -21,9 +21,9 @@ public class OrdersController(OrderService orderService) : ControllerBase
     }
 
     [HttpGet("{id:int}")]
-    public async Task<ActionResult<OrderResponse>> GetOrderById(int id)
+    public async Task<ActionResult<OrderResponse>> GetOrderById(int id, CancellationToken cancellationToken)
     {
-        return Ok(await orderService.GetOrderById(id));
+        return Ok(await orderService.GetOrderById(id, cancellationToken));
     }
 
     [HttpPost]
