@@ -8,4 +8,5 @@ public class Order
     public DateTimeOffset CreatedAt { get; set; }
 
     public virtual Customer Customer { get; set; } = null!;
+    public virtual ICollection<OrderAttachment> Attachments { get; set; } = [];
 }

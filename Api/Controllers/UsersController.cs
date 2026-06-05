@@ -10,7 +10,7 @@ namespace Api.Controllers;
 
 [Authorize(Policy = AppPolicies.ManageUsers)]
 [EnableRateLimiting(RateLimitPolicies.UserApi)]
-[Route("api/[controller]")]
+[Route("api/users")]
 [ApiController]
 public class UsersController(
     UserService userService

@@ -1,6 +1,5 @@
 @CRM_HostAddress = https://localhost:7273
-@AccessToken = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxIiwiZW1haWwiOiJtYW5hZ2VyQHRlc3QuY29tIiwicm9sZSI6IkFkbWluIiwiZXhwIjoxNzc5MTE1MDUzLCJpc3MiOiJjcm0tYXBpIiwiYXVkIjoiY3JtLWNsaWVudCJ9.rCqpqs4_kkisj4xxKWcR7xB0LcOBu7lQ20kzXazoBW8
-
+@AccessToken = your-access-token
 ### Get Orders
 GET {{CRM_HostAddress}}/api/orders?page=1&pageSize=10&customerId=1&minTotalAmount=0&maxTotalAmount=10&createdFrom=2026-05-07T19:20:06&createdTo=2026-05-18T19:20:06.2885903&sortBy=createdAt&sortDirection=desc
 Accept: application/json
@@ -20,3 +19,25 @@ Authorization: Bearer {{AccessToken}}
     "CustomerId": 1,
     "TotalAmount": 1.4
 }
+
+### Create order attachment
+POST {{CRM_HostAddress}}/api/orders/1/attachments
+Content-Type: multipart/form-data; boundary=boundary
+Authorization: Bearer {{AccessToken}}
+
+--boundary
+Content-Disposition: form-data; name="file"; filename="invoice.pdf"
+Content-Type: application/pdf
+
+< ./test-files/invoice.pdf
+--boundary--
+
+### Get order attachments list
+GET {{CRM_HostAddress}}/api/orders/1/attachments
+Accept: application/json
+Authorization: Bearer {{AccessToken}}
+
+### Download order attachment
+GET {{CRM_HostAddress}}/api/orders/1/attachments/1/download
+Accept: application/pdf
+Authorization: Bearer {{AccessToken}}

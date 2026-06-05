@@ -480,3 +480,9 @@ $RECYCLE.BIN/
 
 # Vim temporary swap files
 *.swp
+
+# Uploaded files
+crm-uploads/
+
+# Test docx
+Api/Requests/test-files/*.docx

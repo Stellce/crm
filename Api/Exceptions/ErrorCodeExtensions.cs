@@ -17,6 +17,13 @@ public static class ErrorCodeExtensions
             ErrorCode.UserAlreadyExists => StatusCodes.Status409Conflict,
             ErrorCode.UserNotFound => StatusCodes.Status404NotFound,
 
+            ErrorCode.AttachmentNotFound => StatusCodes.Status404NotFound,
+
+            ErrorCode.MaxFileSizeExceeded => StatusCodes.Status409Conflict,
+            ErrorCode.InvalidFileType => StatusCodes.Status409Conflict,
+            ErrorCode.FileNotFound => StatusCodes.Status404NotFound,
+            ErrorCode.FileIsEmpty => StatusCodes.Status400BadRequest,
+
             ErrorCode.InvalidCredentials => StatusCodes.Status401Unauthorized,
             ErrorCode.InvalidAccessToken => StatusCodes.Status401Unauthorized,
             ErrorCode.InvalidResetToken => StatusCodes.Status400BadRequest,

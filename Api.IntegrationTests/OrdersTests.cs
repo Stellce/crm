@@ -60,7 +60,7 @@ public class OrdersTests(
     {
         await Api.AuthorizeAsSuperAdminAsync();
 
-        var customer = CreateCustomer();
+        var customer = await CreateCustomer();
 
         var orderRequest = new CreateOrderRequest(
             customer.Id,

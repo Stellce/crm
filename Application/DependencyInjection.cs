@@ -13,6 +13,7 @@ public static class DependencyInjection
         services.AddScoped<OrderService>();
         services.AddScoped<UserService>();
         services.AddScoped<AuthService>();
+        services.AddScoped<OrderAttachmentService>();
 
         services.AddValidatorsFromAssemblyContaining<ValidationMarker>();
 

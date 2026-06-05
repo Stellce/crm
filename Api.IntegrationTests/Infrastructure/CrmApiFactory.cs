@@ -7,12 +7,11 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace Api.IntegrationTests;
 
-public sealed class CrmApiFactory(string connectionString, string redisConnectionString)
-        : WebApplicationFactory<Program>
+public sealed class CrmApiFactory(string connectionString, string redisConnectionString) : WebApplicationFactory<Program>
 {
-    private readonly string _connectionString = connectionString;
-    private readonly string _redisConnectionString = redisConnectionString;
     private readonly string _cacheInstanceName = $"crm-tests:{Guid.NewGuid():N}:";
+    private readonly string _fileStorageRootPath = 
+        Path.Combine(Path.GetTempPath(), "crm-integration-tests", Guid.NewGuid().ToString("N"));
 
     public async Task ResetDatabaseAsync()
     {
@@ -31,8 +30,8 @@ public sealed class CrmApiFactory(string connectionString, string redisConnectio
         {
             config.AddInMemoryCollection(new Dictionary<string, string?>
             {
-                ["ConnectionStrings:DefaultConnection"] = _connectionString,
-                ["ConnectionStrings:Redis"] = _redisConnectionString,
+                ["ConnectionStrings:DefaultConnection"] = connectionString,
+                ["ConnectionStrings:Redis"] = redisConnectionString,
                 ["Cache:InstanceName"] = _cacheInstanceName,
                 ["Jwt:Key"] = "integration-tests-secret-key-at-least-32-chars",
                 ["Jwt:Issuer"] = "crm-api",
@@ -41,11 +40,27 @@ public sealed class CrmApiFactory(string connectionString, string redisConnectio
                 ["Auth:RefreshTokenLifetime"] = "00:30:00",
                 ["Auth:TokenClockSkew"] = "00:00:30",
                 ["PasswordReset:TokenLifetime"] = "00:30:00",
-                ["Email:smtp:Enabled"] = "false",
+                ["Email:Smtp:Enabled"] = "false",
                 ["PasswordReset:FrontendBaseUrl"] = "https://localhost:5173",
                 ["Seed:SuperAdmin:Email"] = "superadmin@crm.local",
                 ["Seed:SuperAdmin:Password"] = "SuperAdmin123!",
+                ["FileStorage:RootPath"] = _fileStorageRootPath,
+                ["FileStorage:MaxFileSizeBytes"] = "5242880",
+                ["FileStorage:AllowedExtensions:0"] = ".pdf",
+                ["FileStorage:AllowedExtensions:1"] = ".png",
+                ["FileStorage:AllowedExtensions:2"] = ".jpg",
+                ["FileStorage:AllowedExtensions:3"] = ".jpeg"
             });
         });
+    }
+
+    protected override void Dispose(bool disposing)
+    {
+        base.Dispose(disposing);
+
+        if (Directory.Exists(_fileStorageRootPath))
+        {
+            Directory.Delete(_fileStorageRootPath, recursive: true);
+        }
     }
 }

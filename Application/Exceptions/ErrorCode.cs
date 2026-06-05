@@ -10,6 +10,13 @@ public enum ErrorCode
     UserAlreadyExists,
     UserNotFound,
 
+    AttachmentNotFound,
+
+    MaxFileSizeExceeded,
+    InvalidFileType,
+    FileNotFound,
+    FileIsEmpty,
+
     InvalidCredentials,
     InvalidAccessToken,
     InvalidResetToken,

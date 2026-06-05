@@ -15,6 +15,7 @@ using System.Threading.RateLimiting;
 using System.Globalization;
 using Hangfire;
 using Infrastructure.BackgroundJobs;
+using Application.Storage;
 
 Log.Logger = new LoggerConfiguration()
     .MinimumLevel.Override("Microsoft", LogEventLevel.Information)
@@ -41,7 +42,7 @@ try
     builder.Services.AddControllers();
 
     builder.Services.AddApplication();
-    builder.Services.AddInfrastructure(builder.Configuration, builder.Environment);
+    builder.Services.AddInfrastructure(builder.Environment);
     builder.Services.AddJwtAuthentication(builder.Configuration);
 
     if (!isTesting)
@@ -54,15 +55,22 @@ try
         builder.Services.AddHangfireServer();
     }
 
+    builder.Services.AddOptions<FileStorageOptions>()
+        .BindConfiguration("FileStorage")
+        .Validate(o => !string.IsNullOrWhiteSpace(o.RootPath), "File storage RootPath must not be empty")
+        .Validate(o => o.MaxFileSizeBytes > 0, "FileStorage.MaxFileSizeBytes must be greater than zero")
+        .Validate(o => o.AllowedExtensions.Count > 0, "FileStorage.AllowedExtensions size must be greater than zero")
+        .ValidateOnStart();
+
     builder.Services.AddOptions<AuthOptions>()
-        .Bind(builder.Configuration.GetSection("Auth"))
+        .BindConfiguration("Auth")
         .Validate(o => o.AccessTokenLifetime > TimeSpan.Zero, "AccessTokenLifetime must be greater than zero")
-        .Validate(o => o.RefreshTokenLifetime > TimeSpan.Zero, "RefreshTokenLifetime must be greater than AccessTokenLifetime")
+        .Validate(o => o.RefreshTokenLifetime > o.AccessTokenLifetime, "RefreshTokenLifetime must be greater than AccessTokenLifetime")
         .Validate(o => o.TokenClockSkew >= TimeSpan.Zero, "TokenClockSkew must be non-negative")
         .ValidateOnStart();
 
     builder.Services.AddOptions<PasswordResetOptions>()
-        .Bind(builder.Configuration.GetSection("PasswordReset"))
+        .BindConfiguration("PasswordReset")
         .Validate(o => !string.IsNullOrWhiteSpace(o.FrontendBaseUrl), "PasswordReset.FrontendBaseUrl must not be empty")
         .Validate(o => o.TokenLifetime > TimeSpan.Zero, "PasswordReset.TokenLifetime must be greater than zero")
         .ValidateOnStart();

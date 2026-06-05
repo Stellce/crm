@@ -31,6 +31,31 @@ public static class ErrorCodeExtensions
                 "User not found"
             ),
 
+            ErrorCode.AttachmentNotFound => new ErrorInfo(
+                "ATTACHMENT_NOT_FOUND",
+                "Attachment not found"
+            ),
+
+            ErrorCode.MaxFileSizeExceeded => new ErrorInfo(
+                "MAX_FILE_SIZE_EXCEEDED",
+                "Max file size limit exceeded"
+            ),
+
+            ErrorCode.InvalidFileType => new ErrorInfo(
+                "FILE_TYPE_NOT_ALLOWED",
+                "File type not allowed"
+            ),
+
+            ErrorCode.FileNotFound => new ErrorInfo(
+                "FILE_NOT_FOUND",
+                "File not found"
+            ),
+
+            ErrorCode.FileIsEmpty => new ErrorInfo(
+                "FILE_IS_EMPTY",
+                "File is empty"
+            ),
+
             ErrorCode.InvalidCredentials => new ErrorInfo(
                 "INVALID_CREDENTIALS",
                 "Invalid credentials"

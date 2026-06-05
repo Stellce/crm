@@ -1,5 +1,5 @@
 @CRM_HostAddress = https://localhost:7273
-@AccessToken = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMDAyIiwiZW1haWwiOiJzdXBlcmFkbWluQGNybS5sb2NhbCIsInJvbGUiOiJTdXBlckFkbWluIiwiZXhwIjoxNzc4ODc5MzMxLCJpc3MiOiJjcm0tYXBpIiwiYXVkIjoiY3JtLWNsaWVudCJ9.ZP-_2MrV7ESgDsVqjSte0xymc3LqbrGxR2wBROSOj0o
+@AccessToken = your-access-token
 
 ### Get users
 GET {{CRM_HostAddress}}/api/users

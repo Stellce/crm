@@ -9,7 +9,7 @@ namespace Api.Controllers;
 
 [Authorize(Policy = AppPolicies.ManageCustomers)]
 [EnableRateLimiting(RateLimitPolicies.UserApi)]
-[Route("api/[controller]")]
+[Route("api/customers")]
 [ApiController]
 public class CustomersController(
     CustomerService customerService

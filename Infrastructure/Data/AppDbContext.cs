@@ -12,6 +12,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options)
     public DbSet<User> Users { get; set; }
     public DbSet<RefreshToken> RefreshTokens { get; set; }
     public DbSet<PasswordResetToken> PasswordResetTokens { get; set; }
+    public DbSet<OrderAttachment> OrderAttachments { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -60,5 +61,13 @@ public class AppDbContext(DbContextOptions<AppDbContext> options)
 
         modelBuilder.Entity<PasswordResetToken>()
             .HasIndex(prt => prt.UsedAt);
+
+        modelBuilder.Entity<OrderAttachment>()
+            .HasOne(a => a.Order)
+            .WithMany(o => o.Attachments)
+            .HasForeignKey(a => a.OrderId);
+
+        modelBuilder.Entity<OrderAttachment>()
+            .HasIndex(a => a.OrderId);
     }
 }

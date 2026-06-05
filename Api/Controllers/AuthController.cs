@@ -7,7 +7,7 @@ using Microsoft.AspNetCore.RateLimiting;
 namespace Api.Controllers;
 
 [ApiController]
-[Route("api/[controller]")]
+[Route("api/auth")]
 [EnableRateLimiting(RateLimitPolicies.Auth)]
 public class AuthController(
     AuthService authService
