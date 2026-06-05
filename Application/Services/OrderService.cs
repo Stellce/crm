@@ -14,7 +14,9 @@ public class OrderService(
     IAppCache cache
 )
 {
-    public async Task<PagedResponse<OrderResponse>> GetAllOrdersAsync(OrderQueryParameters queryParams)
+    public async Task<PagedResponse<OrderResponse>> GetAllOrdersAsync(
+        OrderQueryParameters queryParams,
+        CancellationToken cancellationToken)
     {
         var orderQuery = context.Orders
             .AsNoTracking();
@@ -49,7 +51,7 @@ public class OrderService(
                 .Where(order => order.CreatedAt <= createdTo);
         }
 
-        var totalCount = await orderQuery.CountAsync();
+        var totalCount = await orderQuery.CountAsync(cancellationToken);
 
         orderQuery = queryParams.SortBy.ToLowerInvariant() switch
         {
@@ -79,7 +81,7 @@ public class OrderService(
                 order.TotalAmount,
                 order.CreatedAt
             ))
-            .ToListAsync();
+            .ToListAsync(cancellationToken);
 
         return new PagedResponse<OrderResponse>(
             orders,
@@ -120,9 +122,11 @@ public class OrderService(
         return order;
     }
 
-    public async Task<OrderResponse> CreateOrder(CreateOrderRequest orderRequest)
+    public async Task<OrderResponse> CreateOrder(
+        CreateOrderRequest orderRequest,
+        CancellationToken cancellationToken)
     {
-        if (!await context.Customers.AnyAsync(c => c.Id == orderRequest.CustomerId))
+        if (!await context.Customers.AnyAsync(c => c.Id == orderRequest.CustomerId, cancellationToken))
         {
             throw new AppException(ErrorCode.CustomerNotFound);
         }
@@ -135,7 +139,7 @@ public class OrderService(
         };
 
         context.Orders.Add(order);
-        await context.SaveChangesAsync();
+        await context.SaveChangesAsync(cancellationToken);
 
         logger.LogInformation(
             "Order {OrderId} created for customer {CustomerId} with total amount {TotalAmount}", 

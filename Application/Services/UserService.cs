@@ -13,20 +13,25 @@ public class UserService(
     IPasswordHasher<User> hasher
 )
 {
-    public Task<List<UserResponse>> GetUsers(int currentUserId)
+    public async Task<List<UserResponse>> GetUsers(int currentUserId, CancellationToken cancellationToken)
     {
-        var currentUser = context.Users.Find(currentUserId) ?? throw new AppException(ErrorCode.UserNotFound);
+        var currentUserRole = await context.Users
+            .AsNoTracking()
+            .Where(u => u.Id == currentUserId)
+            .Select(u => (UserRole?) u.Role)
+            .FirstOrDefaultAsync(cancellationToken)
+            ?? throw new AppException(ErrorCode.UserNotFound);
 
-        IQueryable<User> query = context.Users;
+        IQueryable<User> query = context.Users.AsNoTracking();
 
-        query = currentUser.Role switch
+        query = currentUserRole switch
         {
             UserRole.SuperAdmin => query,
             UserRole.Admin => query.Where(user => user.Role != UserRole.SuperAdmin),
             _ => throw new AppException(ErrorCode.Forbidden)
         };
 
-        return query
+        return await query
             .Select(user => new UserResponse
             (
                 user.Id,
@@ -34,15 +39,32 @@ public class UserService(
                 user.Role,
                 user.CreatedAt
             ))
-            .ToListAsync();
+            .ToListAsync(cancellationToken);
     }
 
-    public async Task<UserResponse> GetUserById(int targetUserId, int currentUserId)
+    public async Task<UserResponse> GetUserById(int targetUserId, int currentUserId, CancellationToken cancellationToken)
     {
-        var currentUser = await context.Users.FindAsync(currentUserId) ?? throw new AppException(ErrorCode.UserNotFound);
-        var targetUser = await context.Users.FindAsync(targetUserId) ?? throw new AppException(ErrorCode.UserNotFound);
+        var currentUserRole = await context.Users
+            .AsNoTracking()
+            .Where(u => u.Id == currentUserId)
+            .Select(u => (UserRole?)u.Role)
+            .FirstOrDefaultAsync(cancellationToken) 
+            ?? throw new AppException(ErrorCode.UserNotFound);
 
-        if (!CanViewUser(currentUser.Role, targetUser.Role))
+        var targetUser = await context.Users
+            .AsNoTracking()
+            .Where(u => u.Id == targetUserId)
+            .Select(u => new
+            {
+                u.Id,
+                u.Email,
+                u.Role,
+                u.CreatedAt
+            })
+            .FirstOrDefaultAsync(cancellationToken) 
+            ?? throw new AppException(ErrorCode.UserNotFound);
+
+        if (!CanViewUser(currentUserRole, targetUser.Role))
         {
             throw new AppException(ErrorCode.Forbidden);
         }
@@ -56,9 +78,9 @@ public class UserService(
         );
     }
 
-    public async Task<UserResponse> CreateManager(CreateUserRequest request)
+    public async Task<UserResponse> CreateManager(CreateUserRequest request, CancellationToken cancellationToken)
     {
-        if (await context.Users.AnyAsync(u => u.Email == request.Email))
+        if (await context.Users.AnyAsync(u => u.Email == request.Email, cancellationToken))
         {
             throw new AppException(ErrorCode.UserAlreadyExists);
         }
@@ -72,7 +94,7 @@ public class UserService(
         user.PasswordHash = hasher.HashPassword(user, request.Password);
 
         context.Users.Add(user);
-        await context.SaveChangesAsync();
+        await context.SaveChangesAsync(cancellationToken);
 
         return new UserResponse
         (
@@ -83,9 +105,9 @@ public class UserService(
         );
     }
 
-    public async Task<UserResponse> CreateAdmin(CreateUserRequest request)
+    public async Task<UserResponse> CreateAdmin(CreateUserRequest request, CancellationToken cancellationToken)
     {
-        if (await context.Users.AnyAsync(u => u.Email == request.Email))
+        if (await context.Users.AnyAsync(u => u.Email == request.Email, cancellationToken))
         {
             throw new AppException(ErrorCode.UserAlreadyExists);
         }
@@ -99,7 +121,7 @@ public class UserService(
         user.PasswordHash = hasher.HashPassword(user, request.Password);
 
         context.Users.Add(user);
-        await context.SaveChangesAsync();
+        await context.SaveChangesAsync(cancellationToken);
 
         return new UserResponse
         (
@@ -110,10 +132,12 @@ public class UserService(
         );
     }
 
-    public async Task DeleteUser(int targetUserId, int currentUserId)
+    public async Task DeleteUser(int targetUserId, int currentUserId, CancellationToken cancellationToken)
     {
-        var currentUser = await context.Users.FindAsync(currentUserId) ?? throw new AppException(ErrorCode.UserNotFound);
-        var targetUser = await context.Users.FindAsync(targetUserId) ?? throw new AppException(ErrorCode.UserNotFound);
+        var currentUser = await context.Users.FindAsync([currentUserId], cancellationToken)
+            ?? throw new AppException(ErrorCode.UserNotFound);
+        var targetUser = await context.Users.FindAsync([targetUserId], cancellationToken)
+            ?? throw new AppException(ErrorCode.UserNotFound);
 
         if (!CanViewUser(currentUser.Role, targetUser.Role))
         {
@@ -121,7 +145,7 @@ public class UserService(
         }
 
         context.Users.Remove(targetUser);
-        await context.SaveChangesAsync();
+        await context.SaveChangesAsync(cancellationToken);
     }
 
     private static bool CanViewUser(UserRole currentUserRole, UserRole targetUserRole)

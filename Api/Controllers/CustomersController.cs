@@ -17,9 +17,10 @@ public class CustomersController(
 {
     [HttpGet]
     public async Task<ActionResult<PagedResponse<CustomerResponse>>> GetAllCustomers(
-        [FromQuery] CustomerQueryParameters queryParams)
+        [FromQuery] CustomerQueryParameters queryParams,
+        CancellationToken cancellationToken)
     {
-        return Ok(await customerService.GetAllCustomersAsync(queryParams));
+        return Ok(await customerService.GetAllCustomersAsync(queryParams, cancellationToken));
     }
 
     [HttpGet("{id:int}")]
@@ -32,16 +33,18 @@ public class CustomersController(
     [HttpGet("{id:int}/orders")]
     public async Task<ActionResult<PagedResponse<OrderResponse>>> GetCustomerOrders(
         [FromQuery] CustomerOrdersQueryParameters queryParams, 
-        int id)
+        int id,
+        CancellationToken cancellationToken)
     {
-        return Ok(await customerService.GetCustomerOrders(queryParams, id));
+        return Ok(await customerService.GetCustomerOrders(queryParams, id, cancellationToken));
     }
 
     [HttpPost]
     public async Task<ActionResult<CustomerResponse>> CreateCustomer(
-        [FromBody] CreateCustomerRequest request)
+        [FromBody] CreateCustomerRequest request,
+        CancellationToken cancellationToken)
     {
-        var createdCustomer = await customerService.CreateCustomer(request);
+        var createdCustomer = await customerService.CreateCustomer(request, cancellationToken);
 
         return CreatedAtAction(
             nameof(GetCustomerById),
@@ -53,25 +56,27 @@ public class CustomersController(
     [HttpPut("{id:int}")]
     public async Task<ActionResult> PutCustomer(
         [FromBody] CreateCustomerRequest request, 
-        int id)
+        int id,
+        CancellationToken cancellationToken)
     {
-        await customerService.PutCustomer(request, id);
+        await customerService.PutCustomer(request, id, cancellationToken);
         return NoContent();
     }
 
     [HttpPatch("{id:int}")]
     public async Task<ActionResult> PatchCustomer(
         [FromBody] PatchCustomerRequest request, 
-        int id)
+        int id,
+        CancellationToken cancellationToken)
     {
-        await customerService.PatchCustomer(request, id);
+        await customerService.PatchCustomer(request, id, cancellationToken);
         return NoContent();
     }
 
     [HttpDelete("{id:int}")]
-    public async Task<ActionResult> DeleteCustomer(int id)
+    public async Task<ActionResult> DeleteCustomer(int id, CancellationToken cancellationToken)
     {
-        await customerService.DeleteCustomer(id);
+        await customerService.DeleteCustomer(id, cancellationToken);
         return NoContent();
     }
 }

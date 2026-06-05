@@ -18,10 +18,11 @@ public class AuthService(
     IOptions<PasswordResetOptions> passwordResetOptions
 )
 {
-    public async Task<AuthResponse> LoginUser(LoginRequest request)
+    public async Task<AuthResponse> LoginUser(LoginRequest request, CancellationToken cancellationToken)
     {
         var user = await context.Users
-            .SingleOrDefaultAsync(user => user.Email == request.Email) ?? throw new AppException(ErrorCode.InvalidCredentials);
+            .SingleOrDefaultAsync(user => user.Email == request.Email, cancellationToken) 
+            ?? throw new AppException(ErrorCode.InvalidCredentials);
 
         if (hasher.VerifyHashedPassword(user, user.PasswordHash, request.Password) == PasswordVerificationResult.Failed)
         {
@@ -38,18 +39,18 @@ public class AuthService(
             ExpiresAt = DateTimeOffset.UtcNow.Add(authOptions.Value.RefreshTokenLifetime)
         });
 
-        await context.SaveChangesAsync();
+        await context.SaveChangesAsync(cancellationToken);
 
         return new AuthResponse(jwtService.GenerateToken(user), refreshToken);
     }
 
-    public async Task<AuthResponse> RefreshToken(string refreshToken)
+    public async Task<AuthResponse> RefreshToken(string refreshToken, CancellationToken cancellationToken)
     {
         var tokenHash = TokenGenerator.Sha256Hash(refreshToken);
 
         var storedToken = await context.RefreshTokens
             .Include(rt => rt.User)
-            .SingleOrDefaultAsync(rt => rt.TokenHash == tokenHash);
+            .SingleOrDefaultAsync(rt => rt.TokenHash == tokenHash, cancellationToken);
 
         if (storedToken is null || !storedToken.IsActive)
         {
@@ -71,23 +72,23 @@ public class AuthService(
             ExpiresAt = DateTimeOffset.UtcNow.Add(authOptions.Value.RefreshTokenLifetime)
         });
 
-        await context.SaveChangesAsync();
+        await context.SaveChangesAsync(cancellationToken);
 
         return new AuthResponse(newAccessToken, newRefreshToken);
     }
 
-    public async Task LogoutUser(string refreshToken)
+    public async Task LogoutUser(string refreshToken, CancellationToken cancellationToken)
     {
         var tokenHash = TokenGenerator.Sha256Hash(refreshToken);
 
         var storedToken = await context.RefreshTokens
-            .SingleOrDefaultAsync(rt => rt.TokenHash == tokenHash);
+            .SingleOrDefaultAsync(rt => rt.TokenHash == tokenHash, cancellationToken);
 
         if (storedToken is null)
             return;
 
         storedToken.RevokedAt = DateTimeOffset.UtcNow;
-        await context.SaveChangesAsync();
+        await context.SaveChangesAsync(cancellationToken);
     }
 
     public async Task RequestPasswordReset(

@@ -14,7 +14,9 @@ public class CustomerService(
     IAppCache cache
 )
 {
-    public async Task<PagedResponse<CustomerResponse>> GetAllCustomersAsync(CustomerQueryParameters queryParams)
+    public async Task<PagedResponse<CustomerResponse>> GetAllCustomersAsync(
+        CustomerQueryParameters queryParams,
+        CancellationToken cancellationToken)
     {
         var customersQuery = context.Customers
             .AsNoTracking();
@@ -44,7 +46,7 @@ public class CustomerService(
                 : customersQuery.OrderBy(customer => customer.Id)
         };
 
-        var totalCount = await customersQuery.CountAsync();
+        var totalCount = await customersQuery.CountAsync(cancellationToken);
 
         var customers = await customersQuery
             .Skip((queryParams.Page - 1) * queryParams.PageSize)
@@ -54,7 +56,7 @@ public class CustomerService(
                 customer.Name,
                 customer.Email
             ))
-            .ToListAsync();
+            .ToListAsync(cancellationToken);
 
         return new PagedResponse<CustomerResponse>(
             customers,
@@ -95,7 +97,10 @@ public class CustomerService(
         return customer;
     }
 
-    public async Task<PagedResponse<OrderResponse>> GetCustomerOrders(CustomerOrdersQueryParameters queryParams, int customerId)
+    public async Task<PagedResponse<OrderResponse>> GetCustomerOrders(
+        CustomerOrdersQueryParameters queryParams, 
+        int customerId,
+        CancellationToken cancellationToken)
     {
         var ordersQuery = context.Orders
             .AsNoTracking()
@@ -136,13 +141,13 @@ public class CustomerService(
                 : ordersQuery.OrderBy(order => order.Id)
         };
 
-        var totalCount = await ordersQuery.CountAsync();
+        var totalCount = await ordersQuery.CountAsync(cancellationToken);
 
         var orders = await ordersQuery
             .Skip(queryParams.Skip)
             .Take(queryParams.PageSize)
             .Select(o => new OrderResponse(o.Id, customerId, o.TotalAmount, o.CreatedAt))
-            .ToListAsync();
+            .ToListAsync(cancellationToken);
 
         return new PagedResponse<OrderResponse>(
             orders,
@@ -152,9 +157,11 @@ public class CustomerService(
         );
     }
 
-    public async Task<CustomerResponse> CreateCustomer(CreateCustomerRequest request)
+    public async Task<CustomerResponse> CreateCustomer(
+        CreateCustomerRequest request,
+        CancellationToken cancellationToken)
     {
-        if (await context.Customers.AnyAsync(c => c.Email == request.Email))
+        if (await context.Customers.AnyAsync(c => c.Email == request.Email, cancellationToken))
         {
             logger.LogWarning("Customer creation failed: email already exists");
             throw new AppException(ErrorCode.CustomerAlreadyExists);
@@ -167,7 +174,7 @@ public class CustomerService(
         };
 
         context.Customers.Add(customer);
-        await context.SaveChangesAsync();
+        await context.SaveChangesAsync(cancellationToken);
 
         logger.LogInformation("Customer {CustomerId} created", customer.Id);
 
@@ -178,36 +185,45 @@ public class CustomerService(
         );
     }
 
-    public async Task PutCustomer(CreateCustomerRequest request, int id)
+    public async Task PutCustomer(
+        CreateCustomerRequest request, 
+        int id,
+        CancellationToken cancellationToken)
     {
-        var customer = await context.Customers.FindAsync(id) ?? throw new AppException(ErrorCode.CustomerNotFound);
+        var customer = await context.Customers.FindAsync([id], cancellationToken) 
+            ?? throw new AppException(ErrorCode.CustomerNotFound);
         customer.Name = request.Name;
         customer.Email = request.Email;
 
-        await context.SaveChangesAsync();
+        await context.SaveChangesAsync(cancellationToken);
 
-        await cache.RemoveAsync(CacheKeys.CustomerById(id));
+        await cache.RemoveAsync(CacheKeys.CustomerById(id), cancellationToken);
     }
 
-    public async Task PatchCustomer(PatchCustomerRequest request, int id)
+    public async Task PatchCustomer(
+        PatchCustomerRequest request, 
+        int id,
+        CancellationToken cancellationToken)
     {
-        var customer = await context.Customers.FindAsync(id) ?? throw new AppException(ErrorCode.CustomerNotFound);
+        var customer = await context.Customers.FindAsync([id], cancellationToken) 
+            ?? throw new AppException(ErrorCode.CustomerNotFound);
 
         customer.Name = request.Name ?? customer.Name;
         customer.Email = request.Email ?? customer.Email;
 
-        await context.SaveChangesAsync();
+        await context.SaveChangesAsync(cancellationToken);
         
-        await cache.RemoveAsync(CacheKeys.CustomerById(id));
+        await cache.RemoveAsync(CacheKeys.CustomerById(id), cancellationToken);
     }
 
-    public async Task DeleteCustomer(int id)
+    public async Task DeleteCustomer(int id, CancellationToken cancellationToken)
     {
-        var customer = await context.Customers.FindAsync(id) ?? throw new AppException(ErrorCode.CustomerNotFound);
+        var customer = await context.Customers.FindAsync([id], cancellationToken) 
+            ?? throw new AppException(ErrorCode.CustomerNotFound);
         context.Customers.Remove(customer);
 
-        await context.SaveChangesAsync();
+        await context.SaveChangesAsync(cancellationToken);
         
-        await cache.RemoveAsync(CacheKeys.CustomerById(id));
+        await cache.RemoveAsync(CacheKeys.CustomerById(id), cancellationToken);
     }
 }

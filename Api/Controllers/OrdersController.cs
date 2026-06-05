@@ -17,9 +17,10 @@ public class OrdersController(
 {
     [HttpGet]
     public async Task<ActionResult<PagedResponse<OrderResponse>>> GetAllOrders(
-        [FromQuery] OrderQueryParameters queryParams)
+        [FromQuery] OrderQueryParameters queryParams,
+        CancellationToken cancellationToken)
     {
-        return Ok(await orderService.GetAllOrdersAsync(queryParams));
+        return Ok(await orderService.GetAllOrdersAsync(queryParams, cancellationToken));
     }
 
     [HttpGet("{id:int}")]
@@ -30,9 +31,10 @@ public class OrdersController(
 
     [HttpPost]
     public async Task<ActionResult<OrderResponse>> CreateOrder(
-        [FromBody] CreateOrderRequest request)
+        [FromBody] CreateOrderRequest request,
+        CancellationToken cancellationToken)
     {
-        var createdOrder = await orderService.CreateOrder(request);
+        var createdOrder = await orderService.CreateOrder(request, cancellationToken);
         return CreatedAtAction(
             nameof(GetOrderById),
             new { id = createdOrder.Id },

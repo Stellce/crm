@@ -15,23 +15,26 @@ public class AuthController(
 {
     [HttpPost("login")]
     public async Task<ActionResult<AuthResponse>> Login(
-        [FromBody] LoginRequest request)
+        [FromBody] LoginRequest request,
+        CancellationToken cancellationToken)
     {
-        return Ok(await authService.LoginUser(request));
+        return Ok(await authService.LoginUser(request, cancellationToken));
     }
 
     [HttpPost("refresh")]
     public async Task<ActionResult<AuthResponse>> Refresh(
-        [FromBody] RefreshTokenRequest request)
+        [FromBody] RefreshTokenRequest request,
+        CancellationToken cancellationToken)
     {
-        return Ok(await authService.RefreshToken(request.RefreshToken));
+        return Ok(await authService.RefreshToken(request.RefreshToken, cancellationToken));
     }
 
     [HttpPost("logout")]
     public async Task<ActionResult> Logout(
-        [FromBody] RefreshTokenRequest request)
+        [FromBody] RefreshTokenRequest request,
+        CancellationToken cancellationToken)
     {
-        await authService.LogoutUser(request.RefreshToken);
+        await authService.LogoutUser(request.RefreshToken, cancellationToken);
         return NoContent();
     }
 
