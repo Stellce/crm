@@ -49,7 +49,14 @@ public sealed class CrmApiFactory(string connectionString, string redisConnectio
                 ["FileStorage:AllowedExtensions:0"] = ".pdf",
                 ["FileStorage:AllowedExtensions:1"] = ".png",
                 ["FileStorage:AllowedExtensions:2"] = ".jpg",
-                ["FileStorage:AllowedExtensions:3"] = ".jpeg"
+                ["FileStorage:AllowedExtensions:3"] = ".jpeg",
+                ["RateLimiting:Auth:PermitLimit"] = "5",
+                ["RateLimiting:Auth:Window"] = "00:05:00",
+                ["RateLimiting:Auth:QueueLimit"] = "0",
+                ["RateLimiting:UserApi:PermitLimit"] = "60",
+                ["RateLimiting:UserApi:Window"] = "00:01:00",
+                ["RateLimiting:UserApi:SegmentsPerWindow"] = "6",
+                ["RateLimiting:UserApi:QueueLimit"] = "0"
             });
         });
     }

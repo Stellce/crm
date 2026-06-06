@@ -42,6 +42,7 @@ services:
       Seed__SuperAdmin__Password: ${SEED_SUPERADMIN_PASSWORD:-SuperAdmin123!}
     command: >
       sh -c "dotnet tool install --global dotnet-ef --version 10.0.8 &&
+             dotnet restore Api/Api.csproj &&
              export PATH=\"$$PATH:/root/.dotnet/tools\" &&
              dotnet ef database update --project Infrastructure/Infrastructure.csproj --startup-project Api/Api.csproj"
     restart: "no"
@@ -59,6 +60,7 @@ services:
       redis:
         condition: service_started
     environment:
+      DOTNET_SYSTEM_GLOBALIZATION_INVARIANT: 0
       ASPNETCORE_ENVIRONMENT: Development
       ASPNETCORE_URLS: http://+:8080
       ConnectionStrings__DefaultConnection: "Server=db,1433;Database=${SQLSERVER_DB:-CrmDb};User Id=sa;Password=${MSSQL_SA_PASSWORD};Encrypt=True;TrustServerCertificate=True;"
@@ -71,6 +73,13 @@ services:
       Auth__TokenClockSkew: ${AUTH_TOKEN_CLOCK_SKEW:-00:00:30}
       Seed__SuperAdmin__Email: ${SEED_SUPERADMIN_EMAIL:-superadmin@crm.local}
       Seed__SuperAdmin__Password: ${SEED_SUPERADMIN_PASSWORD:-SuperAdmin123!}
+      RateLimiting__Auth__PermitLimit: ${RATE_LIMITING_AUTH_PERMIT_LIMIT:-5}
+      RateLimiting__Auth__Window: ${RATE_LIMITING_AUTH_WINDOW:-00:05:00}
+      RateLimiting__Auth__QueueLimit: ${RATE_LIMITING_AUTH_QUEUE_LIMIT:-0}
+      RateLimiting__UserApi__PermitLimit: ${RATE_LIMITING_USER_API_PERMIT_LIMIT:-60}
+      RateLimiting__UserApi__Window: ${RATE_LIMITING_USER_API_WINDOW:-00:01:00}
+      RateLimiting__UserApi__SegmentsPerWindow: ${RATE_LIMITING_USER_API_SEGMENTS_PER_WINDOW:-6}
+      RateLimiting__UserApi__QueueLimit: ${RATE_LIMITING_USER_API_QUEUE_LIMIT:-0}
     ports:
       - "5144:8080"
 

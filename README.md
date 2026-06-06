@@ -137,6 +137,13 @@ SEED_SUPERADMIN_PASSWORD=change-me
 AUTH_ACCESS_TOKEN_LIFETIME=00:10:00
 AUTH_REFRESH_TOKEN_LIFETIME=00:30:00
 AUTH_TOKEN_CLOCK_SKEW=00:00:30
+RATE_LIMITING_AUTH_PERMIT_LIMIT=5
+RATE_LIMITING_AUTH_WINDOW=00:05:00
+RATE_LIMITING_AUTH_QUEUE_LIMIT=0
+RATE_LIMITING_USER_API_PERMIT_LIMIT=60
+RATE_LIMITING_USER_API_WINDOW=00:01:00
+RATE_LIMITING_USER_API_SEGMENTS_PER_WINDOW=6
+RATE_LIMITING_USER_API_QUEUE_LIMIT=0
 ```
 
 Start the full stack:
@@ -496,11 +503,12 @@ Order-specific filters:
 
 The API uses two rate-limit policies:
 
-| Policy | Scope | Limit |
+| Policy | Scope | Default Limit |
 | --- | --- | --- |
 | `auth` | Authentication endpoints, partitioned by IP | 5 requests per 5 minutes |
 | `user-api` | Authenticated API endpoints, partitioned by user ID or IP | 60 requests per minute |
 
+These values can be configured through the `RateLimiting` configuration section or Docker Compose environment variables.
 Rate-limit responses use HTTP `429 Too Many Requests` and return a `ProblemDetails` response body.
 
 ## Background jobs

@@ -16,6 +16,7 @@ using System.Globalization;
 using Hangfire;
 using Infrastructure.BackgroundJobs;
 using Application.Storage;
+using Microsoft.Extensions.Options;
 
 Log.Logger = new LoggerConfiguration()
     .MinimumLevel.Override("Microsoft", LogEventLevel.Information)
@@ -107,6 +108,17 @@ try
 
     builder.Services.AddFluentValidationAutoValidation();
 
+    builder.Services.AddOptions<RateLimitingOptions>()
+        .BindConfiguration("RateLimiting")
+        .Validate(o => o.Auth.PermitLimit > 0, "RateLimiting.Auth.PermitLimit must be greater than zero")
+        .Validate(o => o.Auth.Window > TimeSpan.Zero, "RateLimiting.Auth.Window must be greater than zero")
+        .Validate(o => o.Auth.QueueLimit >= 0, "RateLimiting.Auth.QueueLimit must be non-negative")
+        .Validate(o => o.UserApi.PermitLimit > 0, "RateLimiting.UserApi.PermitLimit must be greater than zero")
+        .Validate(o => o.UserApi.Window > TimeSpan.Zero, "RateLimiting.UserApi.Window must be greater than zero")
+        .Validate(o => o.UserApi.SegmentsPerWindow > 0, "RateLimiting.UserApi.SegmentsPerWindow must be greater than zero")
+        .Validate(o => o.UserApi.QueueLimit >= 0, "RateLimiting.UserApi.QueueLimit must be non-negative")
+        .ValidateOnStart();
+
     builder.Services.AddRateLimiter(options =>
     {
         options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
@@ -129,21 +141,29 @@ try
 
         options.AddPolicy(RateLimitPolicies.Auth, httpContext =>
         {
+            var rateLimitOptions = httpContext.RequestServices
+                .GetRequiredService<IOptions<RateLimitingOptions>>()
+                .Value;
+
             var ip = httpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown";
 
             return RateLimitPartition.GetFixedWindowLimiter(
                 partitionKey: ip,
                 factory: _ => new FixedWindowRateLimiterOptions
                 {
-                    PermitLimit = 5,
-                    Window = TimeSpan.FromMinutes(5),
-                    QueueLimit = 0,
+                    PermitLimit = rateLimitOptions.Auth.PermitLimit,
+                    Window = rateLimitOptions.Auth.Window,
+                    QueueLimit = rateLimitOptions.Auth.QueueLimit,
                     AutoReplenishment = true
                 });
         });
 
         options.AddPolicy(RateLimitPolicies.UserApi, httpContext =>
         {
+            var rateLimitOptions = httpContext.RequestServices
+                .GetRequiredService<IOptions<RateLimitingOptions>>()
+                .Value;
+                
             var userId = httpContext.User.FindFirst("sub")?.Value;
             var ip = httpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown";
 
@@ -155,10 +175,10 @@ try
                 partitionKey: key,
                 factory: _ => new SlidingWindowRateLimiterOptions
                 {
-                    PermitLimit = 60,
-                    Window = TimeSpan.FromMinutes(1),
-                    SegmentsPerWindow = 6,
-                    QueueLimit = 0,
+                    PermitLimit = rateLimitOptions.UserApi.PermitLimit,
+                    Window = rateLimitOptions.UserApi.Window,
+                    SegmentsPerWindow = rateLimitOptions.UserApi.SegmentsPerWindow,
+                    QueueLimit = rateLimitOptions.UserApi.QueueLimit,
                     QueueProcessingOrder = QueueProcessingOrder.OldestFirst,
                     AutoReplenishment = true
                 });
