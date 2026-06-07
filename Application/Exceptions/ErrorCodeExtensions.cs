@@ -56,6 +56,11 @@ public static class ErrorCodeExtensions
                 "File is empty"
             ),
 
+            ErrorCode.InvalidDateRange => new ErrorInfo(
+                "INVALID_DATE_RANGE",
+                "Invalid date range"
+            ),
+
             ErrorCode.InvalidCredentials => new ErrorInfo(
                 "INVALID_CREDENTIALS",
                 "Invalid credentials"

@@ -1,0 +1,10 @@
+@CRM_HostAddress = https://localhost:7273
+@AccessToken = your-access-token
+
+### Get Customer Sales Report
+GET {{CRM_HostAddress}}/api/reports/customer-sales?from=01.05.2026&to=07.06.2026&minRevenue=0&sortBy=TotalRevenue
+Authorization: Bearer {{AccessToken}}
+
+### Get Customer Timeline Report
+GET {{CRM_HostAddress}}/api/reports/customers/1/timeline?from=01.05.2026&to=07.06.2026
+Authorization: Bearer {{AccessToken}}

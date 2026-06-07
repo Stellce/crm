@@ -1,3 +1,4 @@
+using Application.Abstractions;
 using Application.Services;
 using Application.Validators;
 using FluentValidation;
@@ -14,6 +15,7 @@ public static class DependencyInjection
         services.AddScoped<UserService>();
         services.AddScoped<AuthService>();
         services.AddScoped<OrderAttachmentService>();
+        services.AddScoped<ReportService>();
 
         services.AddValidatorsFromAssemblyContaining<ValidationMarker>();
 

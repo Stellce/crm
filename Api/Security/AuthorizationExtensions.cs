@@ -7,6 +7,14 @@ public static class AuthorizationExtensions
     public static IServiceCollection AddAppAuthorization(this IServiceCollection services)
     {
         services.AddAuthorizationBuilder()
+            .AddPolicy(AppPolicies.ManageReports, policy =>
+                policy
+                    .RequireAuthenticatedUser()
+                    .RequireRole(
+                        nameof(UserRole.SuperAdmin),
+                        nameof(UserRole.Admin),
+                        nameof(UserRole.Manager)
+                    ))
             .AddPolicy(AppPolicies.ManageCustomers, policy =>
                 policy
                     .RequireAuthenticatedUser()

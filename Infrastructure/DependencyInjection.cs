@@ -86,6 +86,7 @@ public static class DependencyInjection
         services.AddScoped<AuthTokenCleanupJob>();
         services.AddScoped<IAppCache, DistributedAppCache>();
         services.AddScoped<IFileStorage, LocalFileStorage>();
+        services.AddScoped<IReportsReadDb, ReportsReadDb>();
 
         return services;
     }

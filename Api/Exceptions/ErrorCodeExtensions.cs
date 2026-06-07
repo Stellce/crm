@@ -24,6 +24,8 @@ public static class ErrorCodeExtensions
             ErrorCode.FileNotFound => StatusCodes.Status404NotFound,
             ErrorCode.FileIsEmpty => StatusCodes.Status400BadRequest,
 
+            ErrorCode.InvalidDateRange => StatusCodes.Status400BadRequest,
+
             ErrorCode.InvalidCredentials => StatusCodes.Status401Unauthorized,
             ErrorCode.InvalidAccessToken => StatusCodes.Status401Unauthorized,
             ErrorCode.InvalidResetToken => StatusCodes.Status400BadRequest,

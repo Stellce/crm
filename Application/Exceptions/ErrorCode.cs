@@ -17,6 +17,8 @@ public enum ErrorCode
     FileNotFound,
     FileIsEmpty,
 
+    InvalidDateRange,
+
     InvalidCredentials,
     InvalidAccessToken,
     InvalidResetToken,
