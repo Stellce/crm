@@ -51,7 +51,8 @@ try
         builder.Services.AddHangfire(configuration =>
         {
             configuration.UseSqlServerStorage(
-                builder.Configuration.GetConnectionString("DefaultConnection"));
+                builder.Configuration.GetConnectionString("DefaultConnection")
+                ?? throw new Exception("Missing DefaultConnection"));
         });
         builder.Services.AddHangfireServer();
     }

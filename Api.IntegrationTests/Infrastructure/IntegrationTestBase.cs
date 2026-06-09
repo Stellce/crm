@@ -1,4 +1,5 @@
 using Api.IntegrationTests.Helpers;
+using Infrastructure.Data;
 
 namespace Api.IntegrationTests;
 
@@ -12,6 +13,7 @@ public abstract class IntegrationTestBase(
 
     protected HttpClient Client { get; private set; } = null!;
     protected CrmTestClient Api { get; private set; } = null!;
+    protected Task ExecuteDbAsync(Func<AppDbContext, Task> action) => _factory.ExecuteDbAsync(action);
 
     public async Task InitializeAsync()
     {

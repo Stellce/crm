@@ -12,6 +12,8 @@ public class ReportsReadDb(AppDbContext context) : IReportsReadDb
         CustomerSalesReportQueryParameters queryParams, 
         CancellationToken cancellationToken)
     {
+        var from = queryParams.From;
+        var toExclusive = queryParams.To?.AddDays(1);
         var totalCount = await context.Database
             .SqlQuery<int>($"""
                 SELECT COUNT(*) AS [Value]
@@ -21,8 +23,8 @@ public class ReportsReadDb(AppDbContext context) : IReportsReadDb
                     FROM Customers AS c
                     LEFT JOIN Orders as o
                         ON o.CustomerId = c.Id
-                        AND({queryParams.From} IS NULL OR o.CreatedAt >= {queryParams.From})
-                        AND({queryParams.To} IS NULL OR CreatedAt <= {queryParams.To})
+                        AND({from} IS NULL OR o.CreatedAt >= {from})
+                        AND({toExclusive} IS NULL OR o.CreatedAt < {toExclusive})
                     GROUP BY
                         c.Id,
                         c.Name,
@@ -62,7 +64,7 @@ public class ReportsReadDb(AppDbContext context) : IReportsReadDb
                     LEFT JOIN Orders AS o
                         ON o.CustomerId = c.Id
                         AND(@from IS NULL OR o.CreatedAt >= @from)
-                        AND(@to IS NULL OR o.CreatedAt <= @to)
+                        AND(@toExclusive IS NULL OR o.CreatedAt < @toExclusive)
                     GROUP BY
                         c.Id,
                         c.Name,
@@ -77,11 +79,11 @@ public class ReportsReadDb(AppDbContext context) : IReportsReadDb
                     sql,
                     new SqlParameter("@from", SqlDbType.DateTimeOffset)
                     {
-                        Value = queryParams.From is null ? DBNull.Value : queryParams.From
+                        Value = from ?? (object)DBNull.Value
                     },
-                    new SqlParameter("@to", SqlDbType.DateTimeOffset)
+                    new SqlParameter("@toExclusive", SqlDbType.DateTimeOffset)
                     {
-                        Value = queryParams.To is null ? DBNull.Value : queryParams.To
+                        Value = toExclusive ?? (object)DBNull.Value
                     },
                     new SqlParameter("@minRevenue", SqlDbType.Decimal)
                     {
@@ -113,6 +115,8 @@ public class ReportsReadDb(AppDbContext context) : IReportsReadDb
         CustomerTimelineReportQueryParameters queryParams,
         CancellationToken cancellationToken)
     {
+        var from = queryParams.From;
+        var toExclusive = queryParams.To?.AddDays(1);
         var totalCount = await context.Database
             .SqlQuery<int>($"""
                 SELECT COUNT(*) AS [Value]
@@ -128,6 +132,8 @@ public class ReportsReadDb(AppDbContext context) : IReportsReadDb
                         NULL AS FileName
                     FROM Orders AS o
                     WHERE o.CustomerId = {customerId}
+                        AND({from} IS NULL OR o.CreatedAt >= {from})
+                        AND({toExclusive} IS NULL OR o.CreatedAt < {toExclusive})
                     
                     UNION ALL
 
@@ -143,6 +149,8 @@ public class ReportsReadDb(AppDbContext context) : IReportsReadDb
                     FROM OrderAttachments AS a
                     JOIN Orders AS o
                         ON a.OrderId = o.Id
+                        AND({from} IS NULL OR o.CreatedAt >= {from})
+                        AND({toExclusive} IS NULL OR o.CreatedAt < {toExclusive})
                     WHERE o.CustomerId = {customerId}
                 ) as timeline
             """)
@@ -167,6 +175,8 @@ public class ReportsReadDb(AppDbContext context) : IReportsReadDb
                         NULL AS FileName
                     FROM Orders AS o
                     WHERE o.CustomerId = {customerId}
+                        AND({from} IS NULL OR o.CreatedAt >= {from})
+                        AND({toExclusive} IS NULL OR o.CreatedAt < {toExclusive})
                     
                     UNION ALL
 
@@ -182,6 +192,8 @@ public class ReportsReadDb(AppDbContext context) : IReportsReadDb
                     FROM OrderAttachments AS a
                     JOIN Orders AS o
                         ON a.OrderId = o.Id
+                        AND({from} IS NULL OR a.CreatedAt >= {from})
+                        AND({toExclusive} IS NULL OR a.CreatedAt < {toExclusive})
                     WHERE o.CustomerId = {customerId}
                 ) as timeline
                 ORDER BY EventDate DESC

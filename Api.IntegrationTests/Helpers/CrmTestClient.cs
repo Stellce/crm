@@ -105,6 +105,17 @@ public sealed class CrmTestClient(HttpClient client)
         return order;
     }
 
+    public async Task<(CustomerResponse, OrderResponse[])> CreateCustomerWithOrdersAsync(params decimal[] orderAmounts)
+    {
+        var customer = await CreateCustomerAsync();
+        var orders = new List<OrderResponse>();
+        foreach (var orderAmount in orderAmounts)
+        {
+            orders.Add(await CreateOrderAsync(customer.Id, orderAmount));
+        }
+        return (customer, orders.ToArray());
+    }
+
     private void SetBearerToken(string accessToken)
     {
         client.DefaultRequestHeaders.Authorization =

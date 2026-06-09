@@ -92,6 +92,29 @@ flowchart LR
     Hangfire --> SqlServer
 ```
 
+## Database and SQL
+
+The project uses SQL Server with Entity Framework Core migrations.
+
+Implemented SQL-related features:
+
+- Relational schema with `Customers`, `Orders`, `Users`, `RefreshTokens`, `PasswordResetTokens`, and `OrderAttachments`
+- Foreign key relationships between:
+
+  - `Customers` -> `Orders`
+  - `Orders` -> `OrderAttachments`
+  - `Users` -> `RefreshTokens`
+  - `Users` -> `PasswordResetTokens`
+- Unique indexes for customer and user emails
+- Unique indexes for refresh token and password reset token hashes
+- Indexes for token cleanup by expiration date
+- Indexes for order attachments lookup by order
+- Pagination, filtering, and sorting for Customers and Orders
+- Reporting queries implemented with raw SQL through EF Core:
+  - customer sales report using `LEFT JOIN`, `GROUP BY`, `HAVING`, `ORDER BY`, `OFFSET`, and `FETCH`
+  - customer timeline report using `UNION ALL`
+- Integration tests run against real SQL Server and Redis containers using Testcontainers
+
 ## Project structure
 
 ```text

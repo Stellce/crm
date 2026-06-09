@@ -13,6 +13,13 @@ public sealed class CrmApiFactory(string connectionString, string redisConnectio
     private readonly string _fileStorageRootPath = 
         Path.Combine(Path.GetTempPath(), "crm-integration-tests", Guid.NewGuid().ToString("N"));
 
+    public async Task ExecuteDbAsync(Func<AppDbContext, Task> action)
+    {
+        using var scope = Services.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+        await action(db);
+    }
+
     public async Task ResetDatabaseAsync()
     {
         using var scope = Services.CreateScope();
