@@ -1,0 +1,92 @@
+name: Deploy Azure Web App
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v6
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v5
+
+      - name: Restore
+        run: dotnet restore
+
+      - name: Build
+        run: dotnet build --configuration Release --no-restore
+
+      - name: Publish
+        run: dotnet publish Api/Api.csproj -c Release -o publish --no-build
+
+      - name: Upload publish artifact
+        uses: actions/upload-artifact@v7
+        with:
+          name: api-publish
+          path: publish
+
+  migrate:
+    name: Migrate Database
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v6
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v5
+
+      - name: Restore
+        run: dotnet restore
+
+      - name: Install dotnet-ef
+        run: dotnet tool install --global dotnet-ef --version 10.0.8
+
+      - name: Apply EF Core migrations
+        env:
+          ConnectionStrings__DefaultConnection: ${{ secrets.CONNECTION_STRING }}
+
+          Seed_SuperAdmin_Email: ${{ secrets.SEED_SUPERADMIN_EMAIL}}
+          Seed_SuperAdmin_Password: ${{ secrets.SEED_SUPERADMIN_PASSWORD}}
+
+          Jwt__Key: ${{ secrets.JWT_KEY }}
+        run: |
+          dotnet ef database update \
+          --project Infrastructure/Infrastructure.csproj \
+          --startup-project Api/Api.csproj \
+          --configuration Release
+
+  deploy:
+    name: Deploy Azure Web App
+    runs-on: ubuntu-latest
+    needs: migrate
+
+    steps:
+      - name: Download publish artifact
+        uses: actions/download-artifact@v8
+        with:
+          name: api-publish
+          path: publish
+
+      - name: Azure login
+        uses: azure/login@v3
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID}}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Deploy Azure Web App
+        uses: azure/webapps-deploy@v3
+        with:
+          app-name: crm-stellce
+          package: publish
+
