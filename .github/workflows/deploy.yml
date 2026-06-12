@@ -55,15 +55,28 @@ jobs:
         env:
           ConnectionStrings__DefaultConnection: ${{ secrets.CONNECTION_STRING }}
 
-          Seed_SuperAdmin_Email: ${{ secrets.SEED_SUPERADMIN_EMAIL}}
-          Seed_SuperAdmin_Password: ${{ secrets.SEED_SUPERADMIN_PASSWORD}}
+          Seed__SuperAdmin__Email: ${{ secrets.SEED_SUPERADMIN_EMAIL }}
+          Seed__SuperAdmin__Password: ${{ secrets.SEED_SUPERADMIN_PASSWORD }}
 
           Jwt__Key: ${{ secrets.JWT_KEY }}
         run: |
-          dotnet ef database update \
-          --project Infrastructure/Infrastructure.csproj \
-          --startup-project Api/Api.csproj \
-          --configuration Release
+          for attempt in 1 2 3 4 5; do
+            echo "Migration attempt: $attempt"
+
+            if dotnet ef database update \
+              --project Infrastructure/Infrastructure.csproj \
+              --startup-project Api/Api.csproj \
+              --configuration Release; then
+              echo "Migrations applied successfully."
+              exit 0
+            fi
+
+            echo "Migration failed. Waiting before retry..."
+            sleep $((attempt * 15))
+          done
+
+          echo "Migration failed after all retries."
+          exit 1
 
   deploy:
     name: Deploy Azure Web App
