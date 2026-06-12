@@ -29,7 +29,13 @@ public static class DependencyInjection
                 ?? throw new InvalidOperationException("Connection string not found");
             options
                 .UseLazyLoadingProxies()
-                .UseSqlServer(connectionString)
+                .UseSqlServer(connectionString, sqlOptions =>
+                {
+                    sqlOptions.EnableRetryOnFailure(
+                        maxRetryCount: 10,
+                        maxRetryDelay: TimeSpan.FromSeconds(30),
+                        errorNumbersToAdd: null);
+                })
                 .UseSeeding((context, _) =>
                 {
                     DatabaseSeeder.Seed((AppDbContext)context, currentConfiguration);
